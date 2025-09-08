@@ -2,28 +2,26 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import logo from "./logo.svg";
 import "./App.css";
+import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
+import Home from "./pages/Home";
+import About from "./pages/About";
+import Packages from "./pages/Packages";
 
 function App() {
-  const [backendMessage, setBackendMessage] = useState("");
-
-  useEffect(() => {
-    const fetchMessage = async () => {
-      try {
-        const res = await axios.get("http://localhost:5050/api/message");
-        setBackendMessage(res.data.message); // Axios already gives JSON
-      } catch (error) {
-        console.error("Error fetching message:", error);
-      }
-    };
-
-    fetchMessage();
-  }, []);
-
   return (
-    <div className="App">
-      <h1>Hello Speexify</h1>
-      <p>{backendMessage}</p>
-    </div>
+    <BrowserRouter>
+      <nav style={{ display: "flex", gap: 16, padding: 16 }}>
+        <Link to="/">Home</Link>
+        <Link to="/about">About</Link>
+        <Link to="/packages">Packages</Link>
+      </nav>
+
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/packages" element={<Packages />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
