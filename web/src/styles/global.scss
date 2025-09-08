@@ -1,0 +1,19 @@
+@import "variables";
+@import "mixins";
+@import "layout";
+
+body {
+  margin: 0;
+  font-family: $font-main;
+  background: white;
+  color: $text-dark;
+}
+
+a {
+  text-decoration: none;
+  color: $primary;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}

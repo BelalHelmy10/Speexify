@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import "../styles/Packages.scss";
 
 function Packages() {
   const [packages, setPackages] = useState([]);
@@ -25,20 +26,18 @@ function Packages() {
   if (error) return <p>{error}</p>;
 
   return (
-    <div style={{ padding: 16 }}>
-      <h2>Packages</h2>
-      <ul>
+    <div>
+      <h2 style={{ textAlign: "center", margin: "20px 0" }}>Our Packages</h2>
+      <div className="packages-container">
         {packages.map((p) => (
-          <li key={p.id} style={{ marginBottom: 12 }}>
-            <h3>{p.title}</h3>
-            <p>{p.description}</p>
-            <p>
-              <strong>${p.priceUSD}</strong>
-            </p>
-            {p.features && <p>{p.features}</p>}
-          </li>
+          <div key={p.id} className="package-card">
+            <div className="package-title">{p.title}</div>
+            <div className="package-description">{p.description}</div>
+            <div className="package-price">${p.priceUSD}</div>
+            {p.features && <div>{p.features}</div>}
+          </div>
         ))}
-      </ul>
+      </div>
     </div>
   );
 }
