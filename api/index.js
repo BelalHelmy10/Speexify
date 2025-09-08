@@ -1,8 +1,10 @@
 // Import express
 import express from "express";
 import cors from "cors";
+import { PrismaClient } from "@prisma/client";
 
 const app = express();
+const prisma = new PrismaClient();
 
 // minimal CORS so 3000 can call 5050
 app.use(
@@ -17,6 +19,16 @@ app.get("/", (req, res) => {
 
 app.get("/api/message", (req, res) => {
   res.json({ message: "Hello from the backend 👋" });
+});
+
+app.get("/api/packages", async (req, res) => {
+  try {
+    const packages = await prisma.package.findMany();
+    res.json(packages);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to fetch packages" });
+  }
 });
 
 const PORT = 5050;
