@@ -2,6 +2,7 @@
 import express from "express";
 import cors from "cors";
 import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcrypt";
 import cookieParser from "cookie-parser";
 import session from "express-session";
 import "dotenv/config";
@@ -70,6 +71,61 @@ app.post("/api/auth/logout", (req, res) => {
     res.clearCookie("speexify.sid");
     res.json({ ok: true });
   });
+});
+
+// REGISTER: create user and start a session
+app.post("/api/auth/register", async (req, res) => {
+  try {
+    let { email, password, name } = req.body;
+    email = email.toLowerCase().trim();
+    if (!email || !password)
+      return res.status(400).json({ error: "Email and password are required" });
+
+    const existing = await prisma.user.findUnique({ where: { email } });
+    if (existing)
+      return res.status(409).json({ error: "Email already registered" });
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = await prisma.user.create({
+      data: { email, name: name || null, hashedPassword, role: "learner" },
+      select: { id: true, email: true, name: true, role: true },
+    });
+
+    req.session.user = user; // start session
+    res.json({ user });
+  } catch (err) {
+    console.error("Register error:", err);
+    res.status(500).json({ error: "Failed to register" });
+  }
+});
+
+// LOGIN: verify password and start a session
+app.post("/api/auth/login", async (req, res) => {
+  try {
+    let { email, password } = req.body;
+    email = email.toLowerCase().trim();
+    if (!email || !password)
+      return res.status(400).json({ error: "Email and password are required" });
+
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) return res.status(401).json({ error: "Invalid credentials" });
+
+    const ok = await bcrypt.compare(password, user.hashedPassword);
+    if (!ok) return res.status(401).json({ error: "Invalid credentials" });
+
+    // keep only safe fields in session
+    const sessionUser = {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+    };
+    req.session.user = sessionUser;
+    res.json({ user: sessionUser });
+  } catch (err) {
+    console.error("Login error:", err);
+    res.status(500).json({ error: "Failed to login" });
+  }
 });
 
 const PORT = 5050;

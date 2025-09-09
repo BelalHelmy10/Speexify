@@ -1,20 +1,29 @@
-import axios from "axios";
 import { useEffect, useState } from "react";
+import axios from "axios";
+axios.defaults.withCredentials = true;
 
 // ensure cookies are sent with every request
 axios.defaults.withCredentials = true;
 
 function Login() {
+  const [form, setForm] = useState({ email: "", password: "" });
   const [user, setUser] = useState(null);
+  const [msg, setMsg] = useState("");
 
   const checkMe = async () => {
     const res = await axios.get("http://localhost:5050/api/auth/me");
     setUser(res.data.user);
   };
 
-  const fakeLogin = async () => {
-    await axios.post("http://localhost:5050/api/auth/test-login");
-    await checkMe();
+  const login = async (e) => {
+    e.preventDefault();
+    setMsg("");
+    try {
+      await axios.post("http://localhost:5050/api/auth/login", form);
+      await checkMe();
+    } catch (e) {
+      setMsg(e.response?.data?.error || "Login failed");
+    }
   };
 
   const logout = async () => {
@@ -28,15 +37,38 @@ function Login() {
 
   return (
     <div>
-      <h2>Login (session test)</h2>
-      <p>
-        Status:{" "}
-        {user ? `Logged in as ${user.name} (${user.role})` : "Logged out"}
-      </p>
-      <button onClick={fakeLogin} style={{ marginRight: 8 }}>
-        Fake Login
-      </button>
-      <button onClick={logout}>Logout</button>
+      <h2>Login</h2>
+
+      {!user ? (
+        <form onSubmit={login}>
+          <input
+            placeholder="Email"
+            type="email"
+            value={form.email}
+            onChange={(e) => setForm({ ...form, email: e.target.value })}
+            required
+          />
+          <br />
+          <input
+            placeholder="Password"
+            type="password"
+            value={form.password}
+            onChange={(e) => setForm({ ...form, password: e.target.value })}
+            required
+          />
+          <br />
+          <button type="submit">Login</button>
+          {msg && <p>{msg}</p>}
+        </form>
+      ) : (
+        <>
+          <p>
+            Logged in as {user.email} {user.name ? `(${user.name})` : ""} —
+            role: {user.role}
+          </p>
+          <button onClick={logout}>Logout</button>
+        </>
+      )}
     </div>
   );
 }
