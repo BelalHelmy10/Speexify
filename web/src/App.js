@@ -17,6 +17,7 @@ import Dashboard from "./pages/Dashboard";
 import Admin from "./pages/Admin";
 import Calendar from "./pages/Calendar";
 import NotFound from "./pages/NotFound";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
   return (
@@ -31,10 +32,34 @@ function App() {
           <Route path="/contact" element={<Contact />} />
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />} />
-          {/* these will be protected later */}
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/admin" element={<Admin />} />
-          <Route path="/calendar" element={<Calendar />} />
+          {/* protected: only logged-in users */}
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/calendar"
+            element={
+              <ProtectedRoute>
+                <Calendar />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* admin-only */}
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute role="admin">
+                <Admin />
+              </ProtectedRoute>
+            }
+          />
         </Route>
         <Route path="*" element={<NotFound />} />
       </Routes>

@@ -35,6 +35,20 @@ app.use(
   })
 );
 
+function requireAuth(req, res, next) {
+  if (!req.session.user)
+    return res.status(401).json({ error: "Not authenticated" });
+  next();
+}
+
+function requireAdmin(req, res, next) {
+  if (!req.session.user)
+    return res.status(401).json({ error: "Not authenticated" });
+  if (req.session.user.role !== "admin")
+    return res.status(403).json({ error: "Admin only" });
+  next();
+}
+
 app.get("/", (req, res) => {
   res.send("Hello from Speexify API 🚀");
 });
@@ -50,6 +64,22 @@ app.get("/api/packages", async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Failed to fetch packages" });
+  }
+});
+
+app.get("/api/protected/hello", requireAuth, (req, res) => {
+  res.json({ message: `Hello, ${req.session.user.email}` });
+});
+
+app.get("/api/admin/users", requireAdmin, async (req, res, next) => {
+  try {
+    const users = await prisma.user.findMany({
+      select: { id: true, email: true, role: true, createdAt: true },
+      orderBy: { id: "asc" },
+    });
+    res.json(users);
+  } catch (err) {
+    next(err); // let your error middleware handle it
   }
 });
 
