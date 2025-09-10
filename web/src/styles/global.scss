@@ -1,12 +1,22 @@
 @import "variables";
 @import "mixins";
 @import "layout";
+@import "./buttons";
+@import "./cards";
+@import "./tables";
+@import "./forms";
 
+// body {
+//   margin: 0;
+//   font-family: $font-main;
+//   background: white;
+//   color: $text-dark;
+// }
 body {
+  font-family: system-ui, sans-serif;
+  background: #f9fafb;
   margin: 0;
-  font-family: $font-main;
-  background: white;
-  color: $text-dark;
+  padding: 0;
 }
 
 a {
