@@ -47,6 +47,9 @@ function Header() {
           <NavLink to="/contact" style={linkStyle}>
             Contact
           </NavLink>
+          <NavLink to="/calendar" style={linkStyle}>
+            Calendar
+          </NavLink>
 
           {/* When not logged in */}
           {!checking && !user && (

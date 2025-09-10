@@ -2,105 +2,187 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 axios.defaults.withCredentials = true;
 
-function Admin() {
+export default function Admin() {
   const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [err, setErr] = useState("");
+  const [form, setForm] = useState({
+    userId: "",
+    title: "",
+    date: "",
+    startTime: "",
+    duration: "60", // default 60 minutes
+    endTime: "", // optional alternative to duration
+    meetingUrl: "",
+    notes: "",
+  });
+  const [status, setStatus] = useState("");
 
-  const load = async () => {
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await axios.get(
+          "http://localhost:5050/api/users?role=learner"
+        );
+        setUsers(res.data);
+      } catch (e) {
+        setStatus(e.response?.data?.error || "Failed to load users");
+      }
+    })();
+  }, []);
+
+  const onChange = (e) => {
+    const { name, value } = e.target;
+    setForm((f) => ({ ...f, [name]: value }));
+  };
+
+  const onSubmit = async (e) => {
+    e.preventDefault();
+    setStatus("Saving...");
+
     try {
-      setErr("");
-      setLoading(true);
-      const res = await axios.get("http://localhost:5050/api/admin/users");
-      setUsers(res.data);
+      const payload = {
+        userId: Number(form.userId),
+        title: form.title.trim(),
+        date: form.date, // "YYYY-MM-DD"
+        startTime: form.startTime, // "HH:MM"
+        duration: form.endTime ? undefined : Number(form.duration),
+        endTime: form.endTime || undefined, // "HH:MM" or undefined
+        meetingUrl: form.meetingUrl || undefined,
+        notes: form.notes || undefined,
+      };
+
+      const res = await axios.post(
+        "http://localhost:5050/api/sessions",
+        payload
+      );
+      setStatus("Created ✓");
+
+      // reset (keep date to add more quickly)
+      setForm((f) => ({
+        ...f,
+        title: "",
+        startTime: "",
+        meetingUrl: "",
+        notes: "",
+      }));
     } catch (e) {
-      setErr(e.response?.data?.error || "Failed to load users");
-    } finally {
-      setLoading(false);
+      setStatus(e.response?.data?.error || "Failed to create session");
     }
   };
 
-  useEffect(() => {
-    load();
-  }, []);
-
-  if (loading) return <p>Loading users…</p>;
-  if (err) return <p style={{ color: "crimson" }}>{err}</p>;
-
   return (
-    <div>
-      <h2>Admin • Users</h2>
-      <button onClick={load} style={{ marginBottom: 12 }}>
-        Refresh
-      </button>
+    <div style={{ maxWidth: 560 }}>
+      <h2>Admin — Create Session</h2>
+      {status && <p>{status}</p>}
 
-      <div style={{ overflowX: "auto" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
-          <thead>
-            <tr>
-              <Th>ID</Th>
-              <Th>Email</Th>
-              <Th>Name</Th>
-              <Th>Role</Th>
-              <Th>Created</Th>
-            </tr>
-          </thead>
-          <tbody>
+      <form onSubmit={onSubmit} style={{ display: "grid", gap: 12 }}>
+        <label>
+          Learner *
+          <select
+            name="userId"
+            value={form.userId}
+            onChange={onChange}
+            required
+          >
+            <option value="">Select a learner…</option>
             {users.map((u) => (
-              <tr key={u.id}>
-                <Td>{u.id}</Td>
-                <Td>{u.email}</Td>
-                <Td>{u.name || "—"}</Td>
-                <Td>
-                  <RoleBadge role={u.role} />
-                </Td>
-                <Td>{new Date(u.createdAt).toLocaleString()}</Td>
-              </tr>
+              <option key={u.id} value={u.id}>
+                {u.name ? `${u.name} — ${u.email}` : u.email}
+              </option>
             ))}
-          </tbody>
-        </table>
-      </div>
+          </select>
+        </label>
+
+        <label>
+          Title *
+          <input
+            name="title"
+            value={form.title}
+            onChange={onChange}
+            placeholder="Speaking A2 — Intro"
+            required
+          />
+        </label>
+
+        <div
+          style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}
+        >
+          <label>
+            Date *
+            <input
+              type="date"
+              name="date"
+              value={form.date}
+              onChange={onChange}
+              required
+            />
+          </label>
+          <label>
+            Start time *
+            <input
+              type="time"
+              name="startTime"
+              value={form.startTime}
+              onChange={onChange}
+              required
+            />
+          </label>
+        </div>
+
+        <fieldset style={{ border: "1px solid #eee", padding: 12 }}>
+          <legend>End time or duration</legend>
+          <div
+            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}
+          >
+            <label>
+              End time
+              <input
+                type="time"
+                name="endTime"
+                value={form.endTime}
+                onChange={(e) => {
+                  // if you set endTime, clear duration (optional behavior)
+                  setForm((f) => ({ ...f, endTime: e.target.value }));
+                }}
+              />
+            </label>
+            <label>
+              Duration (mins)
+              <input
+                type="number"
+                name="duration"
+                min="15"
+                step="15"
+                value={form.duration}
+                onChange={onChange}
+                disabled={!!form.endTime}
+              />
+            </label>
+          </div>
+        </fieldset>
+
+        <label>
+          Meeting link
+          <input
+            name="meetingUrl"
+            value={form.meetingUrl}
+            onChange={onChange}
+            placeholder="https://zoom.us/..."
+          />
+        </label>
+
+        <label>
+          Notes
+          <textarea
+            name="notes"
+            value={form.notes}
+            onChange={onChange}
+            rows={3}
+            placeholder="Anything the learner should prepare…"
+          />
+        </label>
+
+        <button type="submit">Create session</button>
+      </form>
     </div>
   );
 }
-
-// tiny styled helpers
-function Th({ children }) {
-  return (
-    <th
-      style={{
-        textAlign: "left",
-        borderBottom: "1px solid #eee",
-        padding: "8px 6px",
-      }}
-    >
-      {children}
-    </th>
-  );
-}
-function Td({ children }) {
-  return (
-    <td style={{ borderBottom: "1px solid #f3f3f3", padding: "8px 6px" }}>
-      {children}
-    </td>
-  );
-}
-function RoleBadge({ role }) {
-  const bg = role === "admin" ? "#ffe9e6" : "#e6f3ff";
-  const color = role === "admin" ? "#b02a1a" : "#0b5ed7";
-  return (
-    <span
-      style={{
-        background: bg,
-        color,
-        padding: "2px 8px",
-        borderRadius: 12,
-        fontSize: 12,
-      }}
-    >
-      {role}
-    </span>
-  );
-}
-
-export default Admin;

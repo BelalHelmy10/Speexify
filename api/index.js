@@ -16,7 +16,7 @@ app.use(express.json());
 app.use(
   cors({
     origin: "http://localhost:3000",
-    credentials: true,
+    credentials: true, // 👈 important
   })
 );
 
@@ -156,6 +156,104 @@ app.post("/api/auth/login", async (req, res) => {
   } catch (err) {
     console.error("Login error:", err);
     res.status(500).json({ error: "Failed to login" });
+  }
+});
+
+app.get("/api/sessions", async (req, res) => {
+  // must be logged in
+  if (!req.session?.user) {
+    return res.status(401).json({ error: "Not logged in" });
+  }
+
+  const isAdmin = req.session.user.role === "admin";
+  const where = isAdmin ? {} : { userId: req.session.user.id };
+
+  try {
+    const sessions = await prisma.session.findMany({
+      where,
+      orderBy: { startAt: "asc" },
+    });
+    res.json(sessions);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to load sessions" });
+  }
+});
+
+// GET /api/users  (optionally filter by ?role=learner)
+app.get("/api/users", async (req, res) => {
+  if (!req.session?.user)
+    return res.status(401).json({ error: "Not logged in" });
+
+  const where = req.query.role ? { role: String(req.query.role) } : undefined;
+
+  const users = await prisma.user.findMany({
+    where,
+    select: { id: true, email: true, name: true, role: true },
+    orderBy: { email: "asc" },
+  });
+
+  res.json(users);
+});
+
+// POST /api/sessions  (admin only)
+app.post("/api/sessions", async (req, res) => {
+  if (!req.session?.user)
+    return res.status(401).json({ error: "Not logged in" });
+  if (req.session.user.role !== "admin")
+    return res.status(403).json({ error: "Admins only" });
+
+  const {
+    userId,
+    title,
+    date,
+    startTime,
+    duration,
+    endTime,
+    meetingUrl,
+    notes,
+  } = req.body;
+
+  // Minimal validation
+  if (!userId || !title || !date || !startTime) {
+    return res
+      .status(400)
+      .json({ error: "userId, title, date, startTime are required" });
+  }
+
+  // Combine date + startTime into a JS Date (local -> ISO)
+  // date = "2025-09-24", startTime = "10:00"
+  const startAt = new Date(`${date}T${startTime}:00`);
+  if (Number.isNaN(startAt.getTime())) {
+    return res.status(400).json({ error: "Invalid date/time" });
+  }
+
+  let endAt = null;
+  if (endTime) {
+    const e = new Date(`${date}T${endTime}:00`);
+    if (Number.isNaN(e.getTime()))
+      return res.status(400).json({ error: "Invalid endTime" });
+    endAt = e;
+  } else if (duration) {
+    endAt = new Date(startAt.getTime() + Number(duration) * 60 * 1000);
+  }
+
+  try {
+    const session = await prisma.session.create({
+      data: {
+        title,
+        startAt,
+        endAt,
+        meetingUrl: meetingUrl || null,
+        notes: notes || null,
+        user: { connect: { id: Number(userId) } },
+      },
+    });
+
+    res.status(201).json(session);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to create session" });
   }
 });
 

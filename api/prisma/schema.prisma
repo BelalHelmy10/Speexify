@@ -31,4 +31,21 @@ model User {
   role           String   @default("learner") // "learner" | "admin"
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+
+  sessions Session[]
+}
+
+model Session {
+  id         Int      @id @default(autoincrement())
+  title      String
+  startAt    DateTime
+  endAt      DateTime?
+  meetingUrl String?
+  notes      String?
+
+  user       User     @relation(fields: [userId], references: [id])
+  userId     Int
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
