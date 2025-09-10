@@ -1,13 +1,15 @@
+// web/src/components/Header.jsx
 import { NavLink, useNavigate } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
 import axios from "axios";
 
 axios.defaults.withCredentials = true;
 
-function Header() {
+export default function Header() {
   const { user, checking, setUser } = useAuth();
   const navigate = useNavigate();
 
+  // Style helper for active/inactive links
   const linkStyle = ({ isActive }) => ({
     textDecoration: "none",
     color: isActive ? "#0070f3" : "#222",
@@ -15,87 +17,105 @@ function Header() {
   });
 
   const logout = async () => {
-    await axios.post("http://localhost:5050/api/auth/logout");
-    setUser(null); // update local state quickly
-    navigate("/"); // optional: send back to home
+    try {
+      await axios.post("http://localhost:5050/api/auth/logout");
+    } finally {
+      setUser(null);
+      navigate("/login");
+    }
   };
+
+  // Base link sets
+  const PUBLIC_LINKS = [
+    { to: "/", label: "Home" },
+    { to: "/individual-training", label: "Individual" },
+    { to: "/corporate-training", label: "Corporate" },
+    { to: "/packages", label: "Packages" },
+    { to: "/about", label: "About" },
+    { to: "/contact", label: "Contact" },
+    { to: "/register", label: "Register" },
+    { to: "/login", label: "Login" },
+  ];
+
+  const AUTHTED_BASE = [
+    { to: "/dashboard", label: "Dashboard" },
+    { to: "/calendar", label: "Calendar" },
+    { to: "/settings", label: "Settings" },
+  ];
+
+  const linksToShow = user
+    ? [
+        ...AUTHTED_BASE,
+        ...(user.role === "admin" ? [{ to: "/admin", label: "Admin" }] : []),
+      ]
+    : PUBLIC_LINKS;
 
   return (
     <header className="site-header">
       <div
-        className="container"
-        style={{ display: "flex", alignItems: "center", gap: 16 }}
+        className="container header-row"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 16,
+          padding: "12px 0",
+        }}
       >
-        <div className="brand">Speexify</div>
+        {/* Brand */}
+        <NavLink
+          to="/"
+          className="brand"
+          style={{ fontWeight: 700, textDecoration: "none", color: "#111" }}
+        >
+          Speexify
+        </NavLink>
 
-        <nav className="nav" style={{ display: "flex", gap: 12 }}>
-          <NavLink to="/" style={linkStyle}>
-            Home
-          </NavLink>
-          <NavLink to="/individual-training" style={linkStyle}>
-            Individual
-          </NavLink>
-          <NavLink to="/corporate-training" style={linkStyle}>
-            Corporate
-          </NavLink>
-          <NavLink to="/packages" style={linkStyle}>
-            Packages
-          </NavLink>
-          <NavLink to="/about" style={linkStyle}>
-            About
-          </NavLink>
-          <NavLink to="/contact" style={linkStyle}>
-            Contact
-          </NavLink>
-          <NavLink to="/calendar" style={linkStyle}>
-            Calendar
-          </NavLink>
-          <NavLink to="/settings" style={linkStyle}>
-            Settings
-          </NavLink>
+        {/* Main Nav */}
+        <nav
+          className="nav"
+          style={{ display: "flex", gap: 12, flexWrap: "wrap" }}
+        >
+          {linksToShow.map((l) => (
+            <NavLink key={l.to} to={l.to} style={linkStyle}>
+              {l.label}
+            </NavLink>
+          ))}
+        </nav>
 
-          {/* When not logged in */}
-          {!checking && !user && (
+        {/* Right side: status / actions */}
+        <div
+          style={{
+            marginLeft: "auto",
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+          }}
+        >
+          {checking ? (
+            <span style={{ color: "#666" }}>Checking…</span>
+          ) : user ? (
             <>
-              <NavLink to="/register" style={linkStyle}>
-                Register
-              </NavLink>
-              <NavLink to="/login" style={linkStyle}>
-                Login
-              </NavLink>
-            </>
-          )}
-
-          {/* When logged in */}
-          {!checking && user && (
-            <>
-              <NavLink to="/dashboard" style={linkStyle}>
-                Dashboard
-              </NavLink>
-              {/* Show Admin link only for admins */}
-              {user.role === "admin" && (
-                <NavLink to="/admin" style={linkStyle}>
-                  Admin
-                </NavLink>
-              )}
-              <button onClick={logout} style={{ marginLeft: 8 }}>
+              <span style={{ color: "#666" }}>
+                Hi, {user.name || user.email?.split("@")[0] || "User"}
+              </span>
+              <button
+                onClick={logout}
+                className="btn-link"
+                style={{
+                  cursor: "pointer",
+                  background: "none",
+                  border: "none",
+                  color: "#0070f3",
+                }}
+              >
                 Logout
               </button>
             </>
+          ) : (
+            <span style={{ color: "#666" }}>Guest</span>
           )}
-        </nav>
-
-        {/* Right side: small status */}
-        <div style={{ marginLeft: "auto", fontSize: 14, color: "#555" }}>
-          {checking
-            ? "Checking…"
-            : user
-            ? `Hi, ${user.name || user.email}`
-            : "Guest"}
         </div>
       </div>
     </header>
   );
 }
-
-export default Header;

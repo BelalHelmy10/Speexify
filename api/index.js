@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 import session from "express-session";
 import "dotenv/config";
+import axios from "axios";
 
 // Auth & DB
 import bcrypt from "bcrypt";
@@ -10,6 +11,8 @@ import { PrismaClient } from "@prisma/client";
 
 const app = express();
 const prisma = new PrismaClient();
+
+axios.defaults.withCredentials = true;
 
 /* ---------- Middleware ---------- */
 

@@ -28,3 +28,19 @@ a {
     text-decoration: underline;
   }
 }
+.nav-link {
+  color: inherit;
+  opacity: 0.9;
+}
+.nav-link.active {
+  font-weight: 600;
+  text-decoration: underline;
+}
+.btn-link {
+  background: none;
+  border: none;
+  color: #0ea5e9;
+}
+.btn-link:hover {
+  text-decoration: underline;
+}

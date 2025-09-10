@@ -1,8 +1,4 @@
-import { useEffect, useState } from "react";
-import axios from "axios";
-import logo from "./logo.svg";
-import "./App.css";
-import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Layout from "./components/Layout";
 
 import Home from "./pages/Home";
@@ -25,6 +21,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route element={<Layout />}>
+          {/* Public */}
           <Route path="/" element={<Home />} />
           <Route path="/individual-training" element={<IndividualTraining />} />
           <Route path="/corporate-training" element={<CorporateTraining />} />
@@ -33,55 +30,24 @@ function App() {
           <Route path="/contact" element={<Contact />} />
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />} />
-          <Route
-            path="/settings"
-            element={
-              <ProtectedRoute>
-                <Settings />
-              </ProtectedRoute>
-            }
-          />
-          {/* protected: only logged-in users */}
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
 
-          <Route
-            path="/calendar"
-            element={
-              <ProtectedRoute>
-                <Calendar />
-              </ProtectedRoute>
-            }
-          />
+          {/* Auth-only */}
+          <Route element={<ProtectedRoute />}>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/calendar" element={<Calendar />} />
+            <Route path="/settings" element={<Settings />} />
+          </Route>
 
-          {/* admin-only */}
-          <Route
-            path="/admin"
-            element={
-              <ProtectedRoute role="admin">
-                <Admin />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/settings"
-            element={
-              <ProtectedRoute>
-                <Settings />
-              </ProtectedRoute>
-            }
-          />
+          {/* Admin-only */}
+          <Route element={<ProtectedRoute role="admin" />}>
+            <Route path="/admin" element={<Admin />} />
+          </Route>
         </Route>
+
+        {/* Catch-all */}
         <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
   );
 }
-
 export default App;

@@ -1,15 +1,35 @@
-import { Navigate } from "react-router-dom";
-import useAuth from "../hooks/useAuth";
+import { useEffect, useState } from "react";
+import { Outlet, Navigate } from "react-router-dom";
+import axios from "axios";
 
-function ProtectedRoute({ children, role }) {
-  const { user, checking } = useAuth();
+export default function ProtectedRoute({ role }) {
+  const [me, setMe] = useState(undefined); // undefined = loading; null = not authed; object = authed
 
-  if (checking) return <p>Checking session…</p>;
-  if (!user) return <Navigate to="/login" replace />;
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const { data } = await axios.get("http://localhost:5050/api/auth/me");
+        if (mounted) setMe(data.user || null);
+      } catch {
+        if (mounted) setMe(null);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
-  if (role && user.role !== role) return <p>Forbidden (requires {role})</p>;
+  // still loading: render nothing (prevents flicker)
+  if (me === undefined) return null;
 
-  return children;
+  // not logged in -> login
+  if (!me) return <Navigate to="/login" replace />;
+
+  // role-gated
+  if (role && me.role !== role) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return <Outlet />;
 }
-
-export default ProtectedRoute;
