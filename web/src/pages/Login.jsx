@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 axios.defaults.withCredentials = true;
 
 // ensure cookies are sent with every request
@@ -9,6 +10,7 @@ function Login() {
   const [form, setForm] = useState({ email: "", password: "" });
   const [user, setUser] = useState(null);
   const [msg, setMsg] = useState("");
+  const navigate = useNavigate();
 
   const checkMe = async () => {
     const res = await axios.get("http://localhost:5050/api/auth/me");
@@ -21,6 +23,7 @@ function Login() {
     try {
       await axios.post("http://localhost:5050/api/auth/login", form);
       await checkMe();
+      navigate("/dashboard"); // <-- go to dashboard after logging in
     } catch (e) {
       setMsg(e.response?.data?.error || "Login failed");
     }
