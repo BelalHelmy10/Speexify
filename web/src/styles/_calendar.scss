@@ -1,0 +1,106 @@
+@import "./variables";
+
+.calendar-wrap {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 16px;
+}
+
+.react-calendar {
+  width: 100%;
+  background: white;
+  border: 1px solid $color-border;
+  border-radius: $radius;
+  padding: 8px;
+
+  // month navigation
+  .react-calendar__navigation {
+    margin-bottom: 8px;
+
+    button {
+      border: none;
+      background: transparent;
+      padding: 6px 8px;
+      border-radius: $radius;
+      font-weight: 600;
+      cursor: pointer;
+
+      &:hover {
+        background: #f3f4f6;
+      }
+    }
+
+    .react-calendar__navigation__label {
+      font-weight: 700;
+    }
+  }
+
+  // day grid cells
+  .react-calendar__month-view__days__day {
+    padding: 10px 6px;
+    border-radius: $radius;
+
+    &:hover {
+      background: #f8fafc;
+    }
+  }
+
+  // today
+  .react-calendar__tile--now {
+    background: #f1f5f9; // subtle
+    border-radius: $radius;
+  }
+
+  // selected day
+  .react-calendar__tile--active {
+    background: $color-primary !important;
+    color: white !important;
+    border-radius: $radius;
+  }
+}
+
+// tiny blue dot for days with events
+.cal-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-left: 4px;
+  border-radius: 50%;
+  background: $color-primary;
+}
+
+// right-side day panel
+.day-panel {
+  @extend .panel;
+
+  .day-title {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+
+    .date {
+      font-size: 18px;
+      font-weight: 700;
+    }
+    .count {
+      @extend .badge;
+    }
+  }
+
+  .event {
+    padding: 8px 0;
+    border-bottom: 1px solid $color-border;
+
+    &:last-child {
+      border-bottom: 0;
+    }
+
+    .title {
+      font-weight: 600;
+    }
+    .time {
+      font-size: 13px;
+      color: #667085;
+    }
+  }
+}

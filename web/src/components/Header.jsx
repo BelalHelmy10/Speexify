@@ -50,6 +50,9 @@ function Header() {
           <NavLink to="/calendar" style={linkStyle}>
             Calendar
           </NavLink>
+          <NavLink to="/settings" style={linkStyle}>
+            Settings
+          </NavLink>
 
           {/* When not logged in */}
           {!checking && !user && (
