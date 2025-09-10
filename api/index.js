@@ -257,6 +257,58 @@ app.post("/api/sessions", async (req, res) => {
   }
 });
 
+// GET /api/me/summary  -> next session + counts for the logged-in user
+app.get("/api/me/summary", async (req, res) => {
+  if (!req.session?.user)
+    return res.status(401).json({ error: "Not logged in" });
+
+  const now = new Date();
+  const isAdmin = req.session.user.role === "admin";
+  const whereMine = isAdmin ? {} : { userId: req.session.user.id };
+
+  try {
+    // Next upcoming session (startAt in the future)
+    const nextSession = await prisma.session.findFirst({
+      where: {
+        ...whereMine,
+        startAt: { gt: now },
+      },
+      orderBy: { startAt: "asc" },
+      select: {
+        id: true,
+        title: true,
+        startAt: true,
+        endAt: true,
+        meetingUrl: true,
+      },
+    });
+
+    // Counts
+    const upcomingCount = await prisma.session.count({
+      where: {
+        ...whereMine,
+        startAt: { gt: now },
+      },
+    });
+
+    const completedCount = await prisma.session.count({
+      where: {
+        ...whereMine,
+        // consider completed if endAt in past (or startAt in past when no endAt)
+        OR: [
+          { endAt: { lt: now } },
+          { AND: [{ endAt: null }, { startAt: { lt: now } }] },
+        ],
+      },
+    });
+
+    res.json({ nextSession, upcomingCount, completedCount });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to load summary" });
+  }
+});
+
 const PORT = 5050;
 app.listen(PORT, () => {
   console.log(`✅ Server is running on http://localhost:${PORT}`);
