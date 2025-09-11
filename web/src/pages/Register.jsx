@@ -12,6 +12,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import { useState } from "react";
 import axios from "axios";
+import GoogleButton from "../components/GoogleButton";
 axios.defaults.withCredentials = true;
 
 export default function Register() {
@@ -98,6 +99,30 @@ export default function Register() {
   };
 
   // ───────────────────────────────────────────────────────────────────────────
+  // Google registration handlers
+  // - Calls backend /auth/google with the Google credential
+  // - On success → redirect to dashboard
+  // - On failure → show error message
+  // ───────────────────────────────────────────────────────────────────────────
+  const handleGoogleSuccess = async (data) => {
+    try {
+      setMsg("");
+      await axios.post(`${API}/api/auth/google`, {
+        credential: data.credential,
+      });
+      window.location.href = "/dashboard";
+    } catch (err) {
+      console.error(err);
+      setMsg(err.response?.data?.error || "Google sign-in failed");
+    }
+  };
+
+  const handleGoogleError = (err) => {
+    console.error(err);
+    setMsg("Google sign-in failed");
+  };
+
+  // ───────────────────────────────────────────────────────────────────────────
   // Render: wrapper & shared header/message
   // - Uses .auth-page / .auth-card for consistent look with Login
   // - Shows a banner when msg is set (error or success)
@@ -143,6 +168,15 @@ export default function Register() {
             <button className="btn-primary" type="submit" disabled={sending}>
               {sending ? "Sending…" : "Send verification code"}
             </button>
+
+            {/* Divider + Google register */}
+            <div className="divider">
+              <span>or</span>
+            </div>
+            <GoogleButton
+              onSuccess={handleGoogleSuccess}
+              onError={handleGoogleError}
+            />
 
             {/* Footer: link to login */}
             <footer className="auth-foot">

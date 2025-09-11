@@ -9,6 +9,7 @@ import session from "express-session";
 import "dotenv/config";
 import axios from "axios";
 import nodemailer from "nodemailer";
+import { OAuth2Client } from "google-auth-library";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Auth & DB: bcrypt for password hashing, Prisma for DB, crypto for code hashing
@@ -122,6 +123,16 @@ const genCode = () => String(Math.floor(100000 + Math.random() * 900000)); // 6-
 const hashCode = (raw) =>
   crypto.createHash("sha256").update(String(raw)).digest("hex");
 
+// Google OAuth verifier (uses GOOGLE_CLIENT_ID from .env)
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+// For OAuth accounts we don't need a user-chosen password.
+// We'll store a random bcrypt hash to satisfy NOT NULL schema.
+async function randomHashedPassword() {
+  const rand = crypto.randomBytes(32).toString("hex");
+  return await bcrypt.hash(rand, 10);
+}
+
 /* ========================================================================== */
 /*                              HEALTH / HELLO                                */
 /* ========================================================================== */
@@ -199,6 +210,214 @@ if (ALLOW_LEGACY_REGISTER) {
     });
   });
 }
+
+/* ========================================================================== */
+/*                           GOOGLE OAUTH (ID TOKEN)                           */
+/*  POST /api/auth/google  { credential }                                      */
+/*  - Verify Google ID token (aud=GOOGLE_CLIENT_ID)                            */
+/*  - If user exists (by email): sign them in                                  */
+/*  - Else: create user with random hashed password                            */
+/* ========================================================================== */
+app.post("/api/auth/google", async (req, res) => {
+  try {
+    const idToken = String(req.body?.credential || "");
+    if (!idToken) return res.status(400).json({ error: "Missing credential" });
+
+    const ticket = await googleClient.verifyIdToken({
+      idToken,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+    const payload = ticket.getPayload();
+    // payload contains: sub (googleId), email, email_verified, name, picture, ...
+    const googleId = payload?.sub;
+    const email = String(payload?.email || "")
+      .toLowerCase()
+      .trim();
+    const emailVerified = !!payload?.email_verified;
+    const name = payload?.name || null;
+
+    if (!email || !emailVerified) {
+      return res.status(400).json({ error: "Email not verified with Google" });
+    }
+
+    // Look up by email (keep it simple for this baby step)
+    let user = await prisma.user.findUnique({ where: { email } });
+
+    if (!user) {
+      // First time: create a learner with a random hashed password
+      const hashedPassword = await randomHashedPassword();
+      user = await prisma.user.create({
+        data: {
+          email,
+          name,
+          hashedPassword,
+          role: "learner",
+        },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          role: true,
+          timezone: true,
+        },
+      });
+    } else {
+      // If user exists, make sure we return the usual shape
+      user = await prisma.user.findUnique({
+        where: { email },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          role: true,
+          timezone: true,
+        },
+      });
+    }
+
+    // Start your normal session
+    req.session.user = user;
+    return res.json({ ok: true, user });
+  } catch (err) {
+    console.error("google auth error:", err?.message || err);
+    return res.status(401).json({ error: "Invalid Google credential" });
+  }
+});
+
+/* ========================================================================== */
+/*                          PASSWORD RESET (2-step)                            */
+/*  Step 1: /api/auth/password/reset/start     → send 6-digit code            */
+/*  Step 2: /api/auth/password/reset/complete  → verify & set new password    */
+/* ========================================================================== */
+
+// START: always respond {ok:true} (don’t leak whether an email exists)
+app.post("/api/auth/password/reset/start", async (req, res) => {
+  try {
+    const email = String(req.body?.email || "")
+      .toLowerCase()
+      .trim();
+    if (!/^\S+@\S+\.\S+$/.test(email)) return res.json({ ok: true });
+
+    // If user doesn't exist, return ok anyway (privacy)
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) return res.json({ ok: true });
+
+    // Cooldown check
+    const prev = await prisma.passwordResetCode.findUnique({
+      where: { email },
+    });
+    if (prev) {
+      const last = new Date(prev.updatedAt).getTime();
+      const elapsed = Date.now() - last;
+      if (elapsed < 60_000) {
+        // Still return ok (don’t leak), but front-end will throttle on its own
+        return res.json({ ok: true });
+      }
+    }
+
+    const code = genCode();
+    const data = {
+      email,
+      codeHash: hashCode(code),
+      expiresAt: new Date(Date.now() + 10 * 60_000),
+      attempts: 0,
+    };
+
+    await prisma.passwordResetCode.upsert({
+      where: { email },
+      update: {
+        codeHash: data.codeHash,
+        expiresAt: data.expiresAt,
+        attempts: 0,
+      },
+      create: data,
+    });
+
+    await sendEmail(
+      email,
+      "Your Speexify password reset code",
+      `<p>Use this code to reset your password:</p>
+       <p style="font-size:20px;font-weight:700;letter-spacing:2px">${code}</p>
+       <p>This code expires in 10 minutes.</p>`
+    );
+
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error("password/reset/start error:", err);
+    // Still return ok to avoid account enumeration
+    return res.json({ ok: true });
+  }
+});
+
+// COMPLETE: verify code & set new password
+app.post("/api/auth/password/reset/complete", async (req, res) => {
+  try {
+    const email = String(req.body?.email || "")
+      .toLowerCase()
+      .trim();
+    const code = String(req.body?.code || "").trim();
+    const newPassword = String(req.body?.newPassword || "");
+
+    if (!/^\S+@\S+\.\S+$/.test(email))
+      return res.status(400).json({ error: "Valid email is required" });
+    if (!/^\d{6}$/.test(code))
+      return res.status(400).json({ error: "A 6-digit code is required" });
+    if (newPassword.length < 8)
+      return res
+        .status(400)
+        .json({ error: "New password must be at least 8 characters" });
+
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) return res.status(400).json({ error: "Invalid code" }); // generic
+
+    const pr = await prisma.passwordResetCode.findUnique({ where: { email } });
+    if (!pr) return res.status(400).json({ error: "Invalid or expired code" });
+
+    if (new Date() > pr.expiresAt) {
+      await prisma.passwordResetCode.delete({ where: { email } });
+      return res
+        .status(400)
+        .json({ error: "Code expired. Request a new one." });
+    }
+    if (pr.attempts >= 5) {
+      await prisma.passwordResetCode.delete({ where: { email } });
+      return res
+        .status(429)
+        .json({ error: "Too many attempts. Try again later." });
+    }
+
+    const ok = pr.codeHash === hashCode(code);
+    if (!ok) {
+      await prisma.passwordResetCode.update({
+        where: { email },
+        data: { attempts: { increment: 1 } },
+      });
+      return res.status(400).json({ error: "Invalid code" });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await prisma.user.update({
+      where: { email },
+      data: { hashedPassword },
+    });
+
+    await prisma.passwordResetCode.delete({ where: { email } });
+
+    // Optional: log them in right away
+    req.session.user = {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      timezone: user.timezone ?? null,
+    };
+
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error("password/reset/complete error:", err);
+    return res.status(500).json({ error: "Failed to reset password" });
+  }
+});
 
 /* ========================================================================== */
 /*                                   LOGIN                                    */

@@ -6,6 +6,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import GoogleButton from "../components/GoogleButton";
 axios.defaults.withCredentials = true;
 
 function Login() {
@@ -55,6 +56,31 @@ function Login() {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // Google login handlers
+  // - Calls backend /auth/google with the Google credential
+  // - On success → refresh user, redirect to dashboard
+  // - On failure → show error message
+  // ───────────────────────────────────────────────────────────────────────────
+  const handleGoogleSuccess = async (data) => {
+    try {
+      setMsg("");
+      await axios.post("http://localhost:5050/api/auth/google", {
+        credential: data.credential,
+      });
+      await checkMe();
+      navigate("/dashboard");
+    } catch (err) {
+      console.error(err);
+      setMsg(err.response?.data?.error || "Google sign-in failed");
+    }
+  };
+
+  const handleGoogleError = (err) => {
+    console.error(err);
+    setMsg("Google sign-in failed");
   };
 
   // ───────────────────────────────────────────────────────────────────────────
@@ -125,6 +151,22 @@ function Login() {
             <button className="btn-primary" type="submit" disabled={submitting}>
               {submitting ? "Signing in…" : "Login"}
             </button>
+
+            {/* Divider + Google login */}
+            <div className="divider">
+              <span>or</span>
+            </div>
+            <GoogleButton
+              onSuccess={handleGoogleSuccess}
+              onError={handleGoogleError}
+            />
+
+            {/* forgot password */}
+            <p style={{ marginTop: 8 }}>
+              <a className="muted-link" href="/forgot-password">
+                Forgot your password?
+              </a>
+            </p>
 
             {/* Helper footer */}
             <footer className="auth-foot">

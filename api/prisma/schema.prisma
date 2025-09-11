@@ -63,3 +63,13 @@ model VerificationCode {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+model PasswordResetCode {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  codeHash  String
+  expiresAt DateTime
+  attempts  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
