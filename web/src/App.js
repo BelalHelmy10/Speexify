@@ -1,3 +1,12 @@
+// src/App.jsx
+// ─────────────────────────────────────────────────────────────────────────────
+// Purpose: Central route configuration for the app.
+// - Uses React Router v6
+// - Wraps routes with a shared <Layout /> (header/main/footer)
+// - Groups routes into: Public, Auth-only, and Admin-only
+// - Provides a catch-all 404 route
+// ─────────────────────────────────────────────────────────────────────────────
+
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Layout from "./components/Layout";
 
@@ -18,10 +27,20 @@ import Settings from "./pages/Settings";
 
 function App() {
   return (
+    // ─────────────────────────────────────────────────────────────────────────
+    // Router root: enables client-side navigation via <Link>/<NavLink>
+    // ─────────────────────────────────────────────────────────────────────────
     <BrowserRouter>
       <Routes>
+        {/* ────────────────────────────────────────────────────────────────────
+            Shared layout wrapper:
+            - Renders <Header /> and optional <Footer /> inside <Layout />
+            - <Outlet /> inside Layout renders the matching child route
+           ─────────────────────────────────────────────────────────────────── */}
         <Route element={<Layout />}>
-          {/* Public */}
+          {/* ──────────────────────────────────────────────────────────────────
+              Public routes (no auth required)
+             ───────────────────────────────────────────────────────────────── */}
           <Route path="/" element={<Home />} />
           <Route path="/individual-training" element={<IndividualTraining />} />
           <Route path="/corporate-training" element={<CorporateTraining />} />
@@ -31,23 +50,37 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />} />
 
-          {/* Auth-only */}
+          {/* ──────────────────────────────────────────────────────────────────
+              Auth-only routes:
+              - Wrapped in <ProtectedRoute />
+              - <ProtectedRoute> should check session/user and either:
+                a) render <Outlet /> (authorized), or
+                b) redirect to /login (unauthorized)
+             ───────────────────────────────────────────────────────────────── */}
           <Route element={<ProtectedRoute />}>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/calendar" element={<Calendar />} />
             <Route path="/settings" element={<Settings />} />
           </Route>
 
-          {/* Admin-only */}
+          {/* ──────────────────────────────────────────────────────────────────
+              Admin-only routes:
+              - Same mechanism as above, but <ProtectedRoute role="admin" />
+              - Only users with role === "admin" should pass
+             ───────────────────────────────────────────────────────────────── */}
           <Route element={<ProtectedRoute role="admin" />}>
             <Route path="/admin" element={<Admin />} />
           </Route>
         </Route>
 
-        {/* Catch-all */}
+        {/* ────────────────────────────────────────────────────────────────────
+            Catch-all (404):
+            - Matches any path that didn’t match above
+           ─────────────────────────────────────────────────────────────────── */}
         <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
   );
 }
+
 export default App;

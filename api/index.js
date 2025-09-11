@@ -1,26 +1,76 @@
-// Core
+// api/index.js
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Core: Express app, CORS, sessions, dotenv, axios, mail
+// ─────────────────────────────────────────────────────────────────────────────
 import express from "express";
 import cors from "cors";
 import session from "express-session";
 import "dotenv/config";
 import axios from "axios";
+import nodemailer from "nodemailer";
 
-// Auth & DB
+// ─────────────────────────────────────────────────────────────────────────────
+// Auth & DB: bcrypt for password hashing, Prisma for DB, crypto for code hashing
+// ─────────────────────────────────────────────────────────────────────────────
 import bcrypt from "bcrypt";
 import { PrismaClient } from "@prisma/client";
+import crypto from "node:crypto";
 
 const app = express();
 const prisma = new PrismaClient();
-
 axios.defaults.withCredentials = true;
 
-/* ---------- Middleware ---------- */
+/* ========================================================================== */
+/*                             MAILER (shared)                                 */
+/*  Build one Nodemailer transporter at startup. Fallback logs emails in dev.  */
+/* ========================================================================== */
+const EMAIL_FROM =
+  process.env.EMAIL_FROM || "Speexify <no-reply@speexify.local>";
+
+const hasSMTP =
+  !!process.env.SMTP_HOST && !!process.env.SMTP_USER && !!process.env.SMTP_PASS;
+
+let transporter = null;
+if (hasSMTP) {
+  transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST, // e.g. smtp.sendgrid.net
+    port: Number(process.env.SMTP_PORT || 587), // 587 (STARTTLS)
+    secure: false,
+    auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+  });
+
+  // Optional: verify connection once at boot
+  transporter
+    .verify()
+    .then(() => console.log("📧 SMTP transporter ready"))
+    .catch((err) => {
+      console.warn(
+        "⚠️  SMTP verify failed. Falling back to console email.",
+        err?.message || err
+      );
+      transporter = null; // ensure we fall back to console logs
+    });
+}
+
+/** Send an email (uses transporter if available; else logs to console in dev) */
+async function sendEmail(to, subject, html) {
+  if (!transporter) {
+    console.log(`\n[DEV EMAIL] To: ${to}\nSubject: ${subject}\n${html}\n`);
+    return;
+  }
+  await transporter.sendMail({ from: EMAIL_FROM, to, subject, html });
+}
+
+/* ========================================================================== */
+/*                               MIDDLEWARE                                   */
+/* ========================================================================== */
 
 app.use(express.json());
 
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    origin: "http://localhost:3000", // ← adjust to your web app origin
     credentials: true,
   })
 );
@@ -46,13 +96,18 @@ app.use(
   })
 );
 
-/* ---------- Helpers ---------- */
+/* ========================================================================== */
+/*                                  HELPERS                                   */
+/* ========================================================================== */
+
+// Require a logged-in user (protect routes)
 function requireAuth(req, res, next) {
   if (!req.session.user)
     return res.status(401).json({ error: "Not authenticated" });
   next();
 }
 
+// Require an admin user (protect admin routes)
 function requireAdmin(req, res, next) {
   if (!req.session.user)
     return res.status(401).json({ error: "Not authenticated" });
@@ -61,13 +116,25 @@ function requireAdmin(req, res, next) {
   next();
 }
 
-/* ---------- Health / Hello ---------- */
+// Small utilities for the verification flow
+const nowMs = () => Date.now();
+const genCode = () => String(Math.floor(100000 + Math.random() * 900000)); // 6-digit numeric
+const hashCode = (raw) =>
+  crypto.createHash("sha256").update(String(raw)).digest("hex");
+
+/* ========================================================================== */
+/*                              HEALTH / HELLO                                */
+/* ========================================================================== */
+
 app.get("/", (_req, res) => res.send("Hello from Speexify API 🚀"));
 app.get("/api/message", (_req, res) =>
   res.json({ message: "Hello from the backend 👋" })
 );
 
-/* ---------- Public: Packages ---------- */
+/* ========================================================================== */
+/*                             PUBLIC: PACKAGES                                */
+/* ========================================================================== */
+
 app.get("/api/packages", async (_req, res) => {
   try {
     const packages = await prisma.package.findMany();
@@ -78,35 +145,65 @@ app.get("/api/packages", async (_req, res) => {
   }
 });
 
-/* ---------- Auth (email/password) ---------- */
+/* ========================================================================== */
+/*                       AUTH: EMAIL/PASSWORD (LEGACY)                        */
+/*  NOTE: We now *guard* the old one-step register endpoint.                   */
+/*        By default, it is DISABLED and returns 410 Gone.                     */
+/*        Set ALLOW_LEGACY_REGISTER=true in .env to temporarily re-enable.     */
+/* ========================================================================== */
 
-// REGISTER: create user and start a session
-app.post("/api/auth/register", async (req, res) => {
-  try {
-    let { email, password, name } = req.body;
-    email = (email || "").toLowerCase().trim();
-    if (!email || !password)
-      return res.status(400).json({ error: "Email and password are required" });
+// Toggle (default: verification required)
+const ALLOW_LEGACY_REGISTER =
+  String(process.env.ALLOW_LEGACY_REGISTER || "").toLowerCase() === "true";
 
-    const existing = await prisma.user.findUnique({ where: { email } });
-    if (existing)
-      return res.status(409).json({ error: "Email already registered" });
+if (ALLOW_LEGACY_REGISTER) {
+  // ── Legacy register (optional, not recommended) ───────────────────────────
+  app.post("/api/auth/register", async (req, res) => {
+    try {
+      let { email, password, name } = req.body;
+      email = (email || "").toLowerCase().trim();
+      if (!email || !password)
+        return res
+          .status(400)
+          .json({ error: "Email and password are required" });
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const user = await prisma.user.create({
-      data: { email, name: name || null, hashedPassword, role: "learner" },
-      select: { id: true, email: true, name: true, role: true, timezone: true },
+      const existing = await prisma.user.findUnique({ where: { email } });
+      if (existing)
+        return res.status(409).json({ error: "Email already registered" });
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+      const user = await prisma.user.create({
+        data: { email, name: name || null, hashedPassword, role: "learner" },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          role: true,
+          timezone: true,
+        },
+      });
+
+      req.session.user = user; // start session
+      res.json({ user });
+    } catch (err) {
+      console.error("Register error:", err);
+      res.status(500).json({ error: "Failed to register" });
+    }
+  });
+} else {
+  // ── Hard stop: force the new verified flow ────────────────────────────────
+  app.post("/api/auth/register", (_req, res) => {
+    return res.status(410).json({
+      error:
+        "Registration requires email verification. Use /api/auth/register/start then /api/auth/register/complete.",
     });
+  });
+}
 
-    req.session.user = user; // start session
-    res.json({ user });
-  } catch (err) {
-    console.error("Register error:", err);
-    res.status(500).json({ error: "Failed to register" });
-  }
-});
+/* ========================================================================== */
+/*                                   LOGIN                                    */
+/* ========================================================================== */
 
-// LOGIN: verify password and start a session
 app.post("/api/auth/login", async (req, res) => {
   try {
     let { email, password } = req.body;
@@ -135,7 +232,7 @@ app.post("/api/auth/login", async (req, res) => {
   }
 });
 
-// WHO AM I (legacy)
+// WHO AM I (session peek)
 app.get("/api/auth/me", (req, res) => {
   res.json({ user: req.session.user || null });
 });
@@ -148,9 +245,151 @@ app.post("/api/auth/logout", (req, res) => {
   });
 });
 
-/* ---------- NEW: Profile (Step 2) ---------- */
+/* ========================================================================== */
+/*                   NEW AUTH: EMAIL VERIFICATION (RECOMMENDED)               */
+/*  Step 1: /api/auth/register/start     → send 6-digit code                  */
+/*  Step 2: /api/auth/register/complete  → verify code & create account       */
+/*  Requires Prisma model: VerificationCode.                                  */
+/* ========================================================================== */
 
-// GET current user profile (fresh from DB)
+// START: send a code if email is not taken (cooldown 60s, expiry 10 min)
+app.post("/api/auth/register/start", async (req, res) => {
+  try {
+    const email = String(req.body?.email || "")
+      .toLowerCase()
+      .trim();
+    if (!/^\S+@\S+\.\S+$/.test(email)) {
+      return res.status(400).json({ error: "Valid email is required" });
+    }
+
+    // not allowed if the user exists
+    const existing = await prisma.user.findUnique({ where: { email } });
+    if (existing) {
+      return res.status(409).json({ error: "Email is already registered" });
+    }
+
+    // 60s resend cooldown using updatedAt
+    const prev = await prisma.verificationCode.findUnique({ where: { email } });
+    if (prev) {
+      const last = new Date(prev.updatedAt).getTime();
+      const elapsed = Date.now() - last;
+      if (elapsed < 60_000) {
+        const wait = Math.ceil((60_000 - elapsed) / 1000);
+        return res
+          .status(429)
+          .json({ error: `Please wait ${wait}s before resending` });
+      }
+    }
+
+    const code = genCode();
+    const codeHash = hashCode(code);
+    const expiresAt = new Date(Date.now() + 10 * 60_000);
+
+    // Upsert (do not set email in update path)
+    await prisma.verificationCode.upsert({
+      where: { email },
+      update: { codeHash, expiresAt, attempts: 0 },
+      create: { email, codeHash, expiresAt, attempts: 0 },
+    });
+
+    await sendEmail(
+      email,
+      "Your Speexify verification code",
+      `<p>Your verification code is:</p>
+       <p style="font-size:20px;font-weight:700;letter-spacing:2px">${code}</p>
+       <p>This code expires in 10 minutes.</p>`
+    );
+
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error(
+      "register/start error:",
+      err.code || err.name || "",
+      err.message || "",
+      err.meta || ""
+    );
+    return res.status(500).json({ error: "Failed to start registration" });
+  }
+});
+
+// COMPLETE: verify code and create the user; starts a session
+app.post("/api/auth/register/complete", async (req, res) => {
+  try {
+    const email = String(req.body?.email || "")
+      .toLowerCase()
+      .trim();
+    const code = String(req.body?.code || "").trim();
+    const password = String(req.body?.password || "");
+    const name = String(req.body?.name || "");
+
+    if (!/^\S+@\S+\.\S+$/.test(email)) {
+      return res.status(400).json({ error: "Valid email is required" });
+    }
+    if (!/^\d{6}$/.test(code)) {
+      return res.status(400).json({ error: "A 6-digit code is required" });
+    }
+    if (password.length < 6) {
+      return res
+        .status(400)
+        .json({ error: "Password must be at least 6 characters" });
+    }
+
+    const exists = await prisma.user.findUnique({ where: { email } });
+    if (exists)
+      return res.status(409).json({ error: "Email is already registered" });
+
+    const v = await prisma.verificationCode.findUnique({ where: { email } });
+    if (!v)
+      return res
+        .status(400)
+        .json({ error: "No verification code found for this email" });
+
+    if (new Date() > v.expiresAt) {
+      await prisma.verificationCode.delete({ where: { email } });
+      return res.status(400).json({ error: "Verification code has expired" });
+    }
+
+    if (v.attempts >= 5) {
+      await prisma.verificationCode.delete({ where: { email } });
+      return res
+        .status(429)
+        .json({ error: "Too many attempts. Request a new code." });
+    }
+
+    const isMatch = v.codeHash === hashCode(code);
+    if (!isMatch) {
+      await prisma.verificationCode.update({
+        where: { email },
+        data: { attempts: { increment: 1 } },
+      });
+      return res.status(400).json({ error: "Invalid verification code" });
+    }
+
+    // Create user (hash password)
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = await prisma.user.create({
+      data: { email, name: name || null, hashedPassword, role: "learner" },
+      select: { id: true, email: true, name: true, role: true, timezone: true },
+    });
+
+    // Clean up the code row
+    await prisma.verificationCode.delete({ where: { email } });
+
+    // Start a session (keeps behavior consistent)
+    req.session.user = user;
+
+    return res.json({ ok: true, user });
+  } catch (err) {
+    console.error("register/complete error:", err);
+    return res.status(500).json({ error: "Failed to complete registration" });
+  }
+});
+
+/* ========================================================================== */
+/*                              PROFILE (Step 2)                               */
+/*  User profile read/update for name/timezone; keeps session in sync.         */
+/* ========================================================================== */
+
 app.get("/api/me", requireAuth, async (req, res) => {
   try {
     const me = await prisma.user.findUnique({
@@ -172,20 +411,15 @@ app.get("/api/me", requireAuth, async (req, res) => {
   }
 });
 
-// PATCH current user profile (name, timezone)
 app.patch("/api/me", requireAuth, async (req, res) => {
   try {
     const { name, timezone } = req.body;
     const updated = await prisma.user.update({
       where: { id: req.session.user.id },
-      data: {
-        name: name?.trim() || null,
-        timezone: timezone || null,
-      },
+      data: { name: name?.trim() || null, timezone: timezone || null },
       select: { id: true, email: true, name: true, role: true, timezone: true },
     });
 
-    // Keep session in sync with latest name/timezone
     req.session.user = {
       ...req.session.user,
       name: updated.name,
@@ -198,7 +432,10 @@ app.patch("/api/me", requireAuth, async (req, res) => {
   }
 });
 
-/* ---------- Admin: users ---------- */
+/* ========================================================================== */
+/*                                 ADMIN: USERS                               */
+/* ========================================================================== */
+
 app.get("/api/admin/users", requireAdmin, async (_req, res, next) => {
   try {
     const users = await prisma.user.findMany({
@@ -218,7 +455,9 @@ app.get("/api/admin/users", requireAdmin, async (_req, res, next) => {
   }
 });
 
-/* ---------- Sessions (per user or admin) ---------- */
+/* ========================================================================== */
+/*                             SESSIONS (LESSONS)                              */
+/* ========================================================================== */
 
 // List sessions for current user (admins see all)
 app.get("/api/sessions", requireAuth, async (req, res) => {
@@ -355,7 +594,10 @@ app.delete("/api/sessions/:id", requireAdmin, async (req, res) => {
   }
 });
 
-/* ---------- Learner summary ---------- */
+/* ========================================================================== */
+/*                              LEARNER SUMMARY                                */
+/* ========================================================================== */
+
 app.get("/api/me/summary", requireAuth, async (req, res) => {
   const now = new Date();
   const isAdmin = req.session.user.role === "admin";
@@ -395,7 +637,10 @@ app.get("/api/me/summary", requireAuth, async (req, res) => {
   }
 });
 
-/* ---------- Users (generic) ---------- */
+/* ========================================================================== */
+/*                                  USERS                                     */
+/* ========================================================================== */
+
 app.get("/api/users", requireAuth, async (req, res) => {
   const where = req.query.role ? { role: String(req.query.role) } : undefined;
   const users = await prisma.user.findMany({
@@ -406,7 +651,7 @@ app.get("/api/users", requireAuth, async (req, res) => {
   res.json(users);
 });
 
-// POST /api/me/password  (logged-in user)
+// Change password (logged-in user)
 app.post("/api/me/password", requireAuth, async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
@@ -419,19 +664,16 @@ app.post("/api/me/password", requireAuth, async (req, res) => {
         .json({ error: "New password must be at least 8 characters" });
     }
 
-    // Load the full user (including hashedPassword)
     const user = await prisma.user.findUnique({
       where: { id: req.session.user.id },
       select: { id: true, hashedPassword: true },
     });
     if (!user) return res.status(404).json({ error: "User not found" });
 
-    // Verify current password
     const ok = await bcrypt.compare(currentPassword, user.hashedPassword);
     if (!ok)
       return res.status(401).json({ error: "Current password is incorrect" });
 
-    // Update hash
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     await prisma.user.update({
       where: { id: user.id },
@@ -445,7 +687,10 @@ app.post("/api/me/password", requireAuth, async (req, res) => {
   }
 });
 
-/* ---------- Server ---------- */
+/* ========================================================================== */
+/*                                  SERVER                                    */
+/* ========================================================================== */
+
 const PORT = 5050;
 app.listen(PORT, () => {
   console.log(`✅ Server is running on http://localhost:${PORT}`);

@@ -1,120 +1,219 @@
 // web/src/components/Header.jsx
-import { NavLink, useNavigate } from "react-router-dom";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Imports: routing, auth hook, HTTP client, and local state for the mobile menu
+// ─────────────────────────────────────────────────────────────────────────────
+import { useState } from "react";
+import { NavLink, Link, useNavigate } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
 import axios from "axios";
-
 axios.defaults.withCredentials = true;
 
 export default function Header() {
+  // ───────────────────────────────────────────────────────────────────────────
+  // Auth context: current user, loading flag, and setter to clear on logout
+  // ───────────────────────────────────────────────────────────────────────────
   const { user, checking, setUser } = useAuth();
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // Router helper: navigate after logout
+  // ───────────────────────────────────────────────────────────────────────────
   const navigate = useNavigate();
 
-  // Style helper for active/inactive links
-  const linkStyle = ({ isActive }) => ({
-    textDecoration: "none",
-    color: isActive ? "#0070f3" : "#222",
-    fontWeight: isActive ? 600 : 400,
-  });
+  // ───────────────────────────────────────────────────────────────────────────
+  // UI state: controls the hamburger / mobile drawer
+  // ───────────────────────────────────────────────────────────────────────────
+  const [open, setOpen] = useState(false);
 
+  // ───────────────────────────────────────────────────────────────────────────
+  // Logout action: end session on server, clear local auth, then redirect
+  // ───────────────────────────────────────────────────────────────────────────
   const logout = async () => {
     try {
       await axios.post("http://localhost:5050/api/auth/logout");
+    } catch {
+      // ignore network errors; proceed to clear local state
     } finally {
       setUser(null);
+      setOpen(false);
       navigate("/login");
     }
   };
 
-  // Base link sets
-  const PUBLIC_LINKS = [
+  // ───────────────────────────────────────────────────────────────────────────
+  // Navigation models: public (logged out) and authenticated variants
+  // - "learner" is the base for all signed-in users
+  // - "adminExtra" is inserted after Dashboard/Calendar for admins
+  // ───────────────────────────────────────────────────────────────────────────
+  const loggedOut = [
     { to: "/", label: "Home" },
     { to: "/individual-training", label: "Individual" },
     { to: "/corporate-training", label: "Corporate" },
     { to: "/packages", label: "Packages" },
     { to: "/about", label: "About" },
     { to: "/contact", label: "Contact" },
-    { to: "/register", label: "Register" },
-    { to: "/login", label: "Login" },
   ];
 
-  const AUTHTED_BASE = [
+  const learner = [
     { to: "/dashboard", label: "Dashboard" },
     { to: "/calendar", label: "Calendar" },
     { to: "/settings", label: "Settings" },
   ];
 
-  const linksToShow = user
-    ? [
-        ...AUTHTED_BASE,
-        ...(user.role === "admin" ? [{ to: "/admin", label: "Admin" }] : []),
-      ]
-    : PUBLIC_LINKS;
+  const adminExtra = [{ to: "/admin", label: "Admin" }];
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // Final link list:
+  // - While checking auth: show public links (prevents flicker)
+  // - If admin: insert Admin between Calendar and Settings
+  // ───────────────────────────────────────────────────────────────────────────
+  const links =
+    checking || !user
+      ? loggedOut
+      : user.role === "admin"
+      ? [...learner.slice(0, 2), ...adminExtra, ...learner.slice(2)]
+      : learner;
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // Right-side CTA:
+  // - "Checking…" while verifying auth
+  // - "Log in" when logged out
+  // - "Logout" button when logged in
+  // ───────────────────────────────────────────────────────────────────────────
+  const RightCTA = () =>
+    checking ? (
+      <span className="nav-status">Checking…</span>
+    ) : !user ? (
+      <Link to="/login" className="nav-cta">
+        Log in
+      </Link>
+    ) : (
+      <button type="button" className="nav-cta" onClick={logout}>
+        Logout
+      </button>
+    );
 
   return (
-    <header className="site-header">
-      <div
-        className="container header-row"
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 16,
-          padding: "12px 0",
-        }}
-      >
-        {/* Brand */}
-        <NavLink
-          to="/"
-          className="brand"
-          style={{ fontWeight: 700, textDecoration: "none", color: "#111" }}
-        >
-          Speexify
-        </NavLink>
+    // ─────────────────────────────────────────────────────────────────────────
+    // Header wrapper: contains brand, desktop nav, right CTA, and hamburger
+    // ─────────────────────────────────────────────────────────────────────────
+    <header className="site-header-wrapper">
+      <div className="site-header container">
+        {/* ────────────────────────────────────────────────────────────────────
+            Brand / Logo: link back to home
+        ───────────────────────────────────────────────────────────────────── */}
+        <Link to="/" className="brand" aria-label="Speexify">
+          <span>Speexify</span>
+        </Link>
 
-        {/* Main Nav */}
-        <nav
-          className="nav"
-          style={{ display: "flex", gap: 12, flexWrap: "wrap" }}
-        >
-          {linksToShow.map((l) => (
-            <NavLink key={l.to} to={l.to} style={linkStyle}>
-              {l.label}
-            </NavLink>
-          ))}
+        {/* ────────────────────────────────────────────────────────────────────
+            Desktop navigation: primary links + Register (only when logged out)
+        ───────────────────────────────────────────────────────────────────── */}
+        <nav className="nav">
+          <ul className="nav-list">
+            {links.map((item) => (
+              <li key={item.to} className="nav-item">
+                <NavLink
+                  to={item.to}
+                  className={({ isActive }) =>
+                    "nav-link" + (isActive ? " is-active" : "")
+                  }
+                  onClick={() => setOpen(false)}
+                >
+                  {item.label}
+                </NavLink>
+              </li>
+            ))}
+            {!checking && !user && (
+              <li className="nav-item">
+                <NavLink
+                  to="/register"
+                  className={({ isActive }) =>
+                    "nav-link" + (isActive ? " is-active" : "")
+                  }
+                  onClick={() => setOpen(false)}
+                >
+                  Register
+                </NavLink>
+              </li>
+            )}
+          </ul>
         </nav>
 
-        {/* Right side: status / actions */}
-        <div
-          style={{
-            marginLeft: "auto",
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-          }}
+        {/* ────────────────────────────────────────────────────────────────────
+            Right-side CTA: login/logout/checking state indicator
+        ───────────────────────────────────────────────────────────────────── */}
+        <RightCTA />
+
+        {/* ────────────────────────────────────────────────────────────────────
+            Hamburger toggle: opens/closes the mobile drawer
+        ───────────────────────────────────────────────────────────────────── */}
+        <button
+          className={"nav-toggle" + (open ? " is-open" : "")}
+          aria-label="Toggle menu"
+          aria-expanded={open ? "true" : "false"}
+          onClick={() => setOpen((v) => !v)}
         >
-          {checking ? (
-            <span style={{ color: "#666" }}>Checking…</span>
-          ) : user ? (
-            <>
-              <span style={{ color: "#666" }}>
-                Hi, {user.name || user.email?.split("@")[0] || "User"}
-              </span>
-              <button
-                onClick={logout}
-                className="btn-link"
-                style={{
-                  cursor: "pointer",
-                  background: "none",
-                  border: "none",
-                  color: "#0070f3",
-                }}
+          <span />
+          <span />
+          <span />
+        </button>
+      </div>
+
+      {/* ──────────────────────────────────────────────────────────────────────
+          Mobile drawer: mirrors desktop nav; adds CTA row for login/logout
+      ─────────────────────────────────────────────────────────────────────── */}
+      <div className={"mobile-drawer" + (open ? " is-open" : "")}>
+        <ul className="mobile-list">
+          {links.map((item) => (
+            <li key={item.to} className="mobile-item">
+              <NavLink
+                to={item.to}
+                className={({ isActive }) =>
+                  "mobile-link" + (isActive ? " is-active" : "")
+                }
+                onClick={() => setOpen(false)}
               >
+                {item.label}
+              </NavLink>
+            </li>
+          ))}
+
+          {/* Extra actions for logged-out users (only after checking) */}
+          {!checking && !user && (
+            <>
+              <li className="mobile-item">
+                <NavLink
+                  to="/register"
+                  className={({ isActive }) =>
+                    "mobile-link" + (isActive ? " is-active" : "")
+                  }
+                  onClick={() => setOpen(false)}
+                >
+                  Register
+                </NavLink>
+              </li>
+              <li className="mobile-item">
+                <Link
+                  to="/login"
+                  className="mobile-cta"
+                  onClick={() => setOpen(false)}
+                >
+                  Log in
+                </Link>
+              </li>
+            </>
+          )}
+
+          {/* Logout action for authenticated users */}
+          {!checking && user && (
+            <li className="mobile-item">
+              <button className="mobile-cta" onClick={logout} type="button">
                 Logout
               </button>
-            </>
-          ) : (
-            <span style={{ color: "#666" }}>Guest</span>
+            </li>
           )}
-        </div>
+        </ul>
       </div>
     </header>
   );

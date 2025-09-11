@@ -18,3 +18,10 @@ $spacing: 12px;
 $spacing-sm: 8px;
 $spacing-md: 16px;
 $spacing-lg: 24px;
+
+$bg: var(--surface, #ffffff);
+$ink: var(--ink, #0f172a); // slate-900-ish
+$muted: var(--muted, #5b6b87);
+$brand: var(--brand, #0ea5e9); // your primary
+$brand-700: color-mix(in srgb, $brand 85%, #000);
+$ring: rgba(15, 23, 42, 0.06);
