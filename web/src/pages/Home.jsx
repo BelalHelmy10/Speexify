@@ -36,10 +36,11 @@ function Home() {
           <div className="hero__media">
             {/* Replace the placeholder with a real image/video when you’re ready */}
             <div className="media-card">
-              <div className="media-card__img" aria-hidden="true" />
-              <div className="media-card__note">
-                Placeholder — add your hero image here
-              </div>
+              <img
+                src="./images/Hero First.avif"
+                alt="Hero"
+                className="media-card__img"
+              />{" "}
             </div>
           </div>
         </div>
@@ -51,11 +52,15 @@ function Home() {
           <p className="proof__title">Trusted by learners and teams</p>
           <div className="proof__logos">
             {/* Swap these with real client logos when you have them */}
-            <span className="logo-chip">Logo 1</span>
-            <span className="logo-chip">Logo 2</span>
-            <span className="logo-chip">Logo 3</span>
-            <span className="logo-chip">Logo 4</span>
-            <span className="logo-chip">Logo 5</span>
+            <img src="/images/logo-amazon.svg" alt="Logo 1" className="logo" />
+            <img
+              src="/images/logo-cocacola.svg"
+              alt="Logo 2"
+              className="logo"
+            />
+            <img src="/images/logo-tesla.svg" alt="Logo 3" className="logo" />
+            <img src="/images/logo-allianz.svg" alt="Logo 4" className="logo" />
+            <img src="/images/logo-indeed.svg" alt="Logo 5" className="logo" />
           </div>
         </div>
       </section>

@@ -9,6 +9,7 @@
 /* src/styles/global.scss (or wherever you collect partials) */
 @import "./header"; // <= add this line (resolves to _header.scss)
 @import "./auth";
+@import "./footer";
 
 // body {
 //   margin: 0;
