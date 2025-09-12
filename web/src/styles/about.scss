@@ -1,0 +1,456 @@
+@use "../styles/variables" as *; // if you have a variables file; otherwise the $color-* vars should already exist.
+
+.about {
+  // shared
+  h1,
+  h2,
+  h3,
+  h4 {
+    color: $color-black;
+  }
+
+  /* HERO */
+  &__hero {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 3rem;
+    align-items: center;
+    padding: 6rem 2rem 2rem;
+
+    &-right img {
+      width: 100%;
+      border-radius: 2rem;
+      box-shadow: 0 2rem 4rem rgba($color-black, 0.15);
+      object-fit: cover;
+    }
+  }
+  &__badge {
+    display: inline-block;
+    background: rgba($color-primary, 0.12);
+    color: $color-primary;
+    font-weight: 700;
+    padding: 0.6rem 1.2rem;
+    border-radius: 999px;
+    margin-bottom: 1.5rem;
+  }
+  &__headline {
+    font-size: clamp(1.5rem, 4vw, 3rem);
+    line-height: 1.1;
+    margin: 0 0 1.2rem;
+  }
+  &__sub {
+    font-size: 1.4rem;
+    margin-bottom: 2rem;
+  }
+  &__ctaRow {
+    display: flex;
+    gap: 1.2rem;
+    align-items: center;
+  }
+  &__link {
+    font-weight: 700;
+    text-decoration: underline;
+    color: $color-black;
+    &--invert {
+      color: $color-white;
+    }
+  }
+
+  /* HISTORY */
+  &__history {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    gap: 3rem;
+    align-items: center;
+    padding: 6rem 0;
+
+    &-media img {
+      width: 100%;
+      border-radius: 2rem;
+      box-shadow: 0 2rem 4rem rgba($color-black, 0.12);
+      object-fit: cover;
+    }
+    &-copy h2 {
+      font-size: clamp(2rem, 3vw, 3rem);
+      margin-bottom: 1rem;
+    }
+    &-copy p + p {
+      margin-top: 1rem;
+    }
+  }
+
+  /* STATS BAND */
+  &__stats {
+    background: rgba($color-primary, 0.08);
+    padding: 3.5rem 0;
+    &-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 2rem;
+    }
+  }
+  &__stat {
+    text-align: center;
+  }
+  &__stat-value {
+    font-size: 3rem;
+    font-weight: 900;
+  }
+  &__stat-label {
+    opacity: 0.8;
+    font-weight: 700;
+  }
+
+  /* AWARDS */
+  &__awards {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2rem;
+    padding: 4rem 0;
+
+    .about__award {
+      background: $color-white;
+      border-radius: 1.2rem;
+      box-shadow: 0 1rem 2.5rem rgba($color-black, 0.08);
+      display: grid;
+      place-items: center;
+      padding: 2rem;
+      img {
+        max-height: 80px;
+        width: auto;
+      }
+    }
+  }
+
+  /* LIFE SECTION (dark) */
+  &__life {
+    background: #17193a; // deep navy, close to your dark sections
+    color: $color-white;
+    padding: 6rem 0;
+    &-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 1fr;
+      gap: 3rem;
+      align-items: center;
+    }
+    &-copy h2 {
+      font-size: clamp(2rem, 3vw, 3rem);
+      margin-bottom: 1rem;
+      color: $color-white;
+    }
+    &-media {
+      position: relative;
+      min-height: 420px;
+    }
+    &-img {
+      position: absolute;
+      width: 65%;
+      border-radius: 1.6rem;
+      box-shadow: 0 2rem 4rem rgba(0, 0, 0, 0.35);
+      object-fit: cover;
+      &--top {
+        top: 0;
+        right: 0;
+      }
+      &--bottom {
+        bottom: 0;
+        left: 0;
+      }
+    }
+  }
+
+  /* VALUES GRID */
+  &__values {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
+    padding: 6rem 0;
+
+    .about__value {
+      background: $color-white;
+      border-radius: 1.6rem;
+      box-shadow: 0 1.5rem 3rem rgba($color-black, 0.08);
+      padding: 2.2rem;
+      display: grid;
+      gap: 0.8rem;
+      h3 {
+        font-size: 2rem;
+      }
+      p {
+        font-size: 1.4rem;
+      }
+    }
+  }
+  &__value-icon {
+    width: 72px;
+    height: 72px;
+  }
+
+  /* TIMELINE */
+  &__timeline {
+    padding: 2rem 0 6rem;
+    h2 {
+      margin-bottom: 2rem;
+    }
+    &-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.6rem;
+    }
+  }
+  &__timeline-card {
+    background: #f7f7f7;
+    border-radius: 1.2rem;
+    padding: 1.8rem;
+    box-shadow: inset 0 0 0 2px rgba($color-black, 0.04);
+    p {
+      margin: 0.6rem 0 0;
+    }
+  }
+  &__timeline-year {
+    font-weight: 900;
+    font-size: 1.6rem;
+    padding-left: 1rem;
+    border-left: 0.4rem solid $color-primary;
+  }
+
+  /* LEADERSHIP */
+  &__leaders {
+    padding: 2rem 0 6rem;
+    h2 {
+      margin-bottom: 2rem;
+    }
+  }
+  &__leader-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+  }
+  &__leader {
+    background: $color-white;
+    border-radius: 1.6rem;
+    overflow: hidden;
+    box-shadow: 0 1.5rem 3rem rgba($color-black, 0.08);
+    img {
+      width: 100%;
+      object-fit: contain; /* show the full image */
+      height: auto;
+    }
+  }
+  &__leader-card {
+    padding: 1.4rem 1.6rem;
+    background: $color-white;
+    h4 {
+      margin: 0 0 0.4rem;
+    }
+    span {
+      color: rgba($color-black, 0.7);
+      font-weight: 700;
+    }
+  }
+
+  /* TESTIMONIALS */
+  &__testimonials {
+    padding: 2rem 0 6rem;
+    h2 {
+      margin-bottom: 2rem;
+    }
+  }
+  &__quote-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+  }
+  &__quote {
+    background: $color-white;
+    border-radius: 1.2rem;
+    padding: 1.8rem;
+    box-shadow: 0 1.5rem 3rem rgba($color-black, 0.08);
+    p {
+      font-size: 1.6rem;
+    }
+    footer {
+      margin-top: 1rem;
+      display: grid;
+    }
+    strong {
+      font-weight: 900;
+    }
+    span {
+      color: rgba($color-black, 0.6);
+    }
+  }
+
+  /* CTA (dark) */
+  &__cta {
+    background: #17193a;
+    color: $color-white;
+    padding: 6rem 0;
+  }
+  &__cta-inner {
+    text-align: center;
+    max-width: 860px;
+  }
+  &__cta h2 {
+    color: $color-white;
+    font-size: clamp(2rem, 3vw, 3rem);
+    margin-bottom: 0.6rem;
+  }
+  &__cta p {
+    color: rgba($color-white, 0.85);
+    margin-bottom: 1.6rem;
+  }
+
+  /* =========================
+   About page – scoped CTAs
+   ========================= */
+  $about-btn-radius: 999px;
+  $about-btn-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+
+  .about-btn {
+    --_bg: #111;
+    --_fg: #fff;
+    --_bgHover: #000;
+    --_ring: rgba(0, 0, 0, 0.35);
+
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-weight: 700;
+    line-height: 1;
+    text-decoration: none;
+    border: 0;
+    border-radius: $about-btn-radius;
+    padding: 1.1rem 1.8rem;
+    cursor: pointer;
+    transition: transform 0.12s ease, box-shadow 0.2s ease,
+      background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+    background: var(--_bg);
+    color: var(--_fg);
+    box-shadow: $about-btn-shadow;
+    white-space: nowrap;
+
+    &:hover {
+      background: var(--_bgHover);
+      transform: translateY(-1px);
+    }
+    &:active {
+      transform: translateY(0);
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.18);
+    }
+    &:focus-visible {
+      outline: 0;
+      box-shadow: 0 0 0 4px var(--_ring), $about-btn-shadow;
+    }
+  }
+
+  /* Variants – only for About page */
+  .about-btn--primary {
+    --_bg: #{$color-primary};
+    --_fg: #000;
+    --_bgHover: darken($color-primary, 6%);
+    --_ring: rgba($color-primary, 0.45);
+
+    &:hover {
+      background-color: $color-primary;
+    }
+  }
+  .about-btn--secondary {
+    --_bg: #ffc93c;
+    --_fg: #000;
+    --_ring: rgba(19, 19, 41, 0.45);
+
+    &:hover {
+      background-color: #ffc93c;
+    }
+  }
+  .about-btn--outline {
+    --_fg: #131329;
+    --_ring: rgba($color-primary, 0.45);
+    background: transparent;
+    border: 2px solid currentColor;
+    box-shadow: none;
+    &:hover {
+      color: #000;
+      border-color: #000;
+      background: rgba(0, 0, 0, 0.04);
+    }
+  }
+  .about-btn--ghost {
+    --_fg: #fff;
+    background: transparent;
+    box-shadow: 0 0 12px 3px rgba(255, 255, 255, 0.3);
+    &:hover {
+      background: rgba(0, 0, 0, 1);
+    }
+  }
+
+  /* Sizes */
+  .about-btn--lg {
+    padding: 1.25rem 2.1rem;
+    font-size: 1.05rem;
+  }
+  .about-btn--md {
+    padding: 0.95rem 1.6rem;
+    font-size: 1rem;
+  }
+
+  /* Optional right-arrow icon */
+  .about-btn__icon {
+    display: inline-block;
+    translate: 0 1px;
+    transition: transform 0.2s ease;
+  }
+  .about-btn:hover .about-btn__icon {
+    transform: translateX(2px);
+  }
+
+  /* Handy gap for CTA rows in About only */
+  .about-cta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  /* Reduced motion respect */
+  @media (prefers-reduced-motion: reduce) {
+    .about-btn,
+    .about-btn__icon {
+      transition: none;
+    }
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 1100px) {
+    &__hero,
+    &__history,
+    &__life-grid {
+      grid-template-columns: 1fr;
+    }
+    &__awards {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    &__values {
+      grid-template-columns: 1fr;
+    }
+    &__timeline-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    &__leader-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+    &__quote-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  @media (max-width: 640px) {
+    &__stats-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+    &__leader-grid,
+    &__quote-grid,
+    &__awards,
+    &__timeline-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+}
