@@ -25,3 +25,39 @@ $muted: var(--muted, #5b6b87);
 $brand: var(--brand, #0ea5e9); // your primary
 $brand-700: color-mix(in srgb, $brand 85%, #000);
 $ring: rgba(15, 23, 42, 0.06);
+
+//other variables
+
+//colors
+$color-primary: #1acbdd;
+// $color-primary-dark:#28b485;
+// $color-primary-light:#7ed56f;
+
+$color-primary-dark: #0d666f;
+$color-primary-light: #8de5ee;
+
+$color-secondary-light: #ffb900;
+$color-secondary-dark: #ff7730;
+
+$color-tertiary-light: #2998ff;
+$color-tertiary-dark: #5643fa;
+
+$color-grey-light: #f7f7f7;
+$color-grey-light-2: #eee;
+
+$color-dark-grey: #777;
+$color-dark-grey-2: #999;
+$color-dark-grey-3: #333;
+
+$color-white: #fff;
+$color-black: #000;
+
+//GRID
+$grid-width: 114rem;
+$gutter-vertical: 8rem;
+$gutter-vertical-small: 6rem;
+$gutter-horizontal: 6rem;
+
+//font-sizes
+$default-font-size: 1.6rem;
+$font-size-big: 2rem;

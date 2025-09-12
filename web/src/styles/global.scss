@@ -24,6 +24,13 @@ body {
   padding: 0;
 }
 
+.container {
+  /* if you already have a container class, keep it; otherwise: */
+  max-width: 90%;
+  margin-inline: auto;
+  padding-inline: 16px;
+}
+
 a {
   text-decoration: none;
   color: $primary;

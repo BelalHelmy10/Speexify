@@ -1,3 +1,3 @@
-export default function CorporateTraining() {
-  return <h2>Corporate Training</h2>;
+export default function Contact() {
+  return <h2>Corporate</h2>;
 }
