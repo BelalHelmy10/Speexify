@@ -25,6 +25,7 @@ import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Settings from "./pages/Settings";
 import ForgotPassword from "./pages/ForgotPassword";
+import Careers from "./pages/Careers";
 
 function App() {
   return (
@@ -50,6 +51,7 @@ function App() {
           <Route path="/contact" element={<Contact />} />
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/careers" element={<Careers />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
 
           {/* ──────────────────────────────────────────────────────────────────

@@ -37,11 +37,7 @@ function Footer() {
               <Link to="/contact" className="col-link">
                 Contact
               </Link>
-              <a
-                className="col-link"
-                href="#careers"
-                onClick={(e) => e.preventDefault()}
-              >
+              <a className="col-link" href="/Careers">
                 Careers
               </a>
             </div>
