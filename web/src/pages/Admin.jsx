@@ -1,3 +1,4 @@
+// web/src/pages/Admin.jsx (or wherever you place it)
 import { useEffect, useState, useMemo } from "react";
 import axios from "axios";
 import "../styles/admin.scss";
@@ -7,11 +8,11 @@ axios.defaults.withCredentials = true;
 function Admin() {
   const [status, setStatus] = useState("");
 
-  // Data
-  const [users, setUsers] = useState([]);
+  // Data (for sessions)
+  const [users, setUsers] = useState([]); // learners for the Create form
   const [sessions, setSessions] = useState([]);
 
-  // Filters
+  // Filters (sessions list)
   const [q, setQ] = useState("");
   const [qDebounced, setQDebounced] = useState("");
   const [from, setFrom] = useState("");
@@ -19,7 +20,7 @@ function Admin() {
   const [loading, setLoading] = useState(false);
   const [total, setTotal] = useState(0);
 
-  // Create form
+  // Create form (session)
   const [form, setForm] = useState({
     userId: "",
     title: "",
@@ -31,7 +32,7 @@ function Admin() {
     notes: "",
   });
 
-  // Edit form
+  // Edit form (session)
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({
     userId: "",
@@ -43,6 +44,13 @@ function Admin() {
     meetingUrl: "",
     notes: "",
   });
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // NEW: Users Admin state (manage all users)
+  // ───────────────────────────────────────────────────────────────────────────
+  const [usersAdmin, setUsersAdmin] = useState([]);
+  const [usersQ, setUsersQ] = useState("");
+  const [usersBusy, setUsersBusy] = useState(false);
 
   // ---------- helpers ----------
   const toDateInput = (iso) => {
@@ -73,7 +81,48 @@ function Admin() {
       minute: "2-digit",
     });
 
-  // ---------- load users once ----------
+  // ───────────────────────────────────────────────────────────────────────────
+  // NEW: duration helpers + auto-calc on start/end change
+  // ───────────────────────────────────────────────────────────────────────────
+  const joinDateTime = (dateStr, timeStr) => {
+    if (!dateStr || !timeStr) return null;
+    const [y, m, d] = dateStr.split("-").map(Number);
+    const [hh, mm] = timeStr.split(":").map(Number);
+    return new Date(y, (m || 1) - 1, d || 1, hh || 0, mm || 0, 0, 0);
+  };
+
+  const diffMinutes = (start, end) => {
+    if (!start || !end) return 0;
+    let ms = end - start;
+    if (ms < 0) ms += 24 * 60 * 60 * 1000; // crosses midnight → next day
+    return Math.round(ms / 60000);
+  };
+
+  // Auto-calc duration for CREATE when date/start/end all present
+  useEffect(() => {
+    if (form.date && form.startTime && form.endTime) {
+      const start = joinDateTime(form.date, form.startTime);
+      const end = joinDateTime(form.date, form.endTime);
+      const mins = diffMinutes(start, end);
+      setForm((f) =>
+        f.duration === String(mins) ? f : { ...f, duration: String(mins) }
+      );
+    }
+  }, [form.date, form.startTime, form.endTime]);
+
+  // Auto-calc duration for EDIT when date/start/end all present
+  useEffect(() => {
+    if (editingId && editForm.date && editForm.startTime && editForm.endTime) {
+      const start = joinDateTime(editForm.date, editForm.startTime);
+      const end = joinDateTime(editForm.date, editForm.endTime);
+      const mins = diffMinutes(start, end);
+      setEditForm((f) =>
+        f.duration === String(mins) ? f : { ...f, duration: String(mins) }
+      );
+    }
+  }, [editingId, editForm.date, editForm.startTime, editForm.endTime]);
+
+  // ---------- load learners for Create form ----------
   useEffect(() => {
     (async () => {
       try {
@@ -87,7 +136,7 @@ function Admin() {
     })();
   }, []);
 
-  // ---------- debounce search ----------
+  // ---------- debounce search (sessions list) ----------
   useEffect(() => {
     const t = setTimeout(() => setQDebounced(q), 300);
     return () => clearTimeout(t);
@@ -234,6 +283,84 @@ function Admin() {
     }
   };
 
+  // ───────────────────────────────────────────────────────────────────────────
+  // NEW: Users Admin — handlers (list/search/role/disable/reset/impersonate)
+  // ───────────────────────────────────────────────────────────────────────────
+  async function loadUsersAdmin() {
+    setUsersBusy(true);
+    try {
+      const { data } = await axios.get(
+        `http://localhost:5050/api/admin/users?q=${encodeURIComponent(usersQ)}`
+      );
+      setUsersAdmin(data || []);
+    } finally {
+      setUsersBusy(false);
+    }
+  }
+  useEffect(() => {
+    loadUsersAdmin(); /* on mount */
+  }, []);
+  useEffect(() => {
+    const t = setTimeout(loadUsersAdmin, 300);
+    return () => clearTimeout(t);
+  }, [usersQ]);
+
+  async function changeRole(u, role) {
+    try {
+      await axios.patch(`http://localhost:5050/api/admin/users/${u.id}`, {
+        role,
+      });
+      setStatus("Role updated ✓");
+      loadUsersAdmin();
+    } catch (e) {
+      setStatus(e.response?.data?.error || "Failed to update role");
+    }
+  }
+
+  async function toggleDisabled(u) {
+    try {
+      await axios.patch(`http://localhost:5050/api/admin/users/${u.id}`, {
+        isDisabled: !u.isDisabled,
+      });
+      setStatus(!u.isDisabled ? "User disabled" : "User enabled");
+      loadUsersAdmin();
+    } catch (e) {
+      setStatus(e.response?.data?.error || "Failed to change status");
+    }
+  }
+
+  async function sendReset(u) {
+    try {
+      await axios.post(
+        `http://localhost:5050/api/admin/users/${u.id}/reset-password`
+      );
+      setStatus("Reset email sent ✓");
+    } catch (e) {
+      setStatus(e.response?.data?.error || "Failed to send reset");
+    }
+  }
+
+  async function impersonate(u) {
+    try {
+      await axios.post(`http://localhost:5050/api/admin/impersonate/${u.id}`);
+      setStatus(`Viewing as ${u.email}`);
+      // Optional: navigate to user-facing dashboard
+      // window.location.href = "/dashboard";
+    } catch (e) {
+      setStatus(e.response?.data?.error || "Failed to impersonate");
+    }
+  }
+
+  async function stopImpersonate() {
+    try {
+      await axios.post(`http://localhost:5050/api/admin/impersonate/stop`);
+      setStatus("Back to admin");
+      // window.location.reload();
+    } catch (e) {
+      setStatus(e.response?.data?.error || "Failed to stop impersonation");
+    }
+  }
+
   return (
     <div className="admin">
       <header className="admin__header">
@@ -241,7 +368,96 @@ function Admin() {
         {status && <span className="admin__status">{status}</span>}
       </header>
 
-      {/* Create */}
+      {/* ───────────────────────────────────────────────────────────────────────
+          Users Admin (list/search; change role; disable/enable; reset; view-as)
+          ─────────────────────────────────────────────────────────────────── */}
+      <section className="card">
+        <div className="card__header card__header--row">
+          <h2 className="card__title">Users</h2>
+          <div className="filters">
+            <input
+              className="input input--search"
+              placeholder="Search by email or name…"
+              value={usersQ}
+              onChange={(e) => setUsersQ(e.target.value)}
+            />
+            <button className="btn" onClick={loadUsersAdmin}>
+              {usersBusy ? "…" : "Refresh"}
+            </button>
+            <button className="btn" onClick={stopImpersonate}>
+              Return to admin
+            </button>
+          </div>
+        </div>
+
+        <div className="table">
+          <div className="table__scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Email / Name</th>
+                  <th>Role</th>
+                  <th>Status</th>
+                  <th style={{ width: 320 }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {usersAdmin.map((u) => (
+                  <tr key={u.id}>
+                    <td>{u.id}</td>
+                    <td>
+                      <div style={{ display: "flex", flexDirection: "column" }}>
+                        <strong>{u.email}</strong>
+                        <span style={{ color: "var(--muted)" }}>
+                          {u.name || "—"}
+                        </span>
+                      </div>
+                    </td>
+                    <td>
+                      <select
+                        className="select"
+                        value={u.role}
+                        onChange={(e) => changeRole(u, e.target.value)}
+                      >
+                        <option value="learner">learner</option>
+                        <option value="teacher">teacher</option>
+                        <option value="admin">admin</option>
+                      </select>
+                    </td>
+                    <td>{u.isDisabled ? "Disabled" : "Active"}</td>
+                    <td>
+                      <div className="btn-row">
+                        <button className="btn" onClick={() => sendReset(u)}>
+                          Reset password
+                        </button>
+                        <button className="btn" onClick={() => impersonate(u)}>
+                          View as
+                        </button>
+                        <button
+                          className={`btn ${u.isDisabled ? "" : "btn--danger"}`}
+                          onClick={() => toggleDisabled(u)}
+                        >
+                          {u.isDisabled ? "Enable" : "Disable"}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {usersAdmin.length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="empty">
+                      No users
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      {/* Create session */}
       <section className="card">
         <div className="card__header">
           <h2 className="card__title">Create session</h2>
@@ -382,7 +598,7 @@ function Admin() {
         </form>
       </section>
 
-      {/* List */}
+      {/* List sessions */}
       <section className="card">
         <div className="card__header card__header--row">
           <h2 className="card__title">All sessions</h2>

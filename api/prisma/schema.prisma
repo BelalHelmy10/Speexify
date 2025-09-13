@@ -29,12 +29,29 @@ model User {
   email          String   @unique
   name           String?
   hashedPassword String
-  role           String   @default("learner") // "learner" | "admin" | "teacher"
+  role           String   @default("learner") // learner | teacher | admin
   timezone       String?
+  isDisabled     Boolean  @default(false)     // 👈 NEW
+
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  sessions Session[]
+  sessions       Session[]
+  audits         Audit[]  @relation("Audit_actor")
+}
+
+model Audit {
+  id        Int      @id @default(autoincrement())
+  actorId   Int
+  action    String   // e.g., user_disable, role_change, impersonate_start
+  entity    String   // e.g., "User"
+  entityId  Int?
+  meta      Json?
+  createdAt DateTime @default(now())
+
+  actor     User     @relation("Audit_actor", fields: [actorId], references: [id])
+
+  @@index([entity, entityId])
 }
 
 model Session {
