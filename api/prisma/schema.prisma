@@ -48,6 +48,9 @@ model Session {
   user       User     @relation(fields: [userId], references: [id])
   userId     Int
 
+    // ✅ New: mark that the 24h reminder was sent
+  reminder24hSentAt DateTime?
+
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 }
@@ -73,3 +76,4 @@ model PasswordResetCode {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+

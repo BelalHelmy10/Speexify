@@ -6,7 +6,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon index.js",
     "start": "node index.js",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "send:reminders24h": "node scripts/sendReminders24h.js"
   },
   "keywords": [],
   "author": "",
