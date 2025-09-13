@@ -10,6 +10,7 @@
 @import "./header"; // <= add this line (resolves to _header.scss)
 @import "./auth";
 @import "./footer";
+@import "./admin.scss";
 
 // body {
 //   margin: 0;

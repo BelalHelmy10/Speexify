@@ -695,12 +695,68 @@ app.get("/api/sessions", requireAuth, async (req, res) => {
 });
 
 // Admin: list all sessions (with learner info)
-app.get("/api/admin/sessions", requireAdmin, async (_req, res) => {
-  const sessions = await prisma.session.findMany({
-    orderBy: { startAt: "desc" },
-    include: { user: { select: { id: true, email: true, name: true } } },
-  });
-  res.json(sessions);
+// GET /api/admin/sessions?q=&userId=&from=&to=&limit=&offset=
+app.get("/api/admin/sessions", requireAdmin, async (req, res) => {
+  try {
+    const {
+      q = "",
+      userId = "",
+      from = "", // YYYY-MM-DD
+      to = "", // YYYY-MM-DD
+      limit = "50",
+      offset = "0",
+    } = req.query;
+
+    const where = {};
+
+    // filter by userId (exact)
+    if (userId) where.userId = Number(userId);
+
+    // filter by text: user email/name OR session title
+    if (q) {
+      where.OR = [
+        { title: { contains: q, mode: "insensitive" } },
+        { user: { email: { contains: q, mode: "insensitive" } } },
+        { user: { name: { contains: q, mode: "insensitive" } } },
+      ];
+    }
+
+    // date range (inclusive days)
+    if (from || to) {
+      where.startAt = {};
+      if (from) where.startAt.gte = new Date(from);
+      if (to) {
+        const end = new Date(to);
+        end.setDate(end.getDate() + 1); // make end-date inclusive
+        where.startAt.lt = end;
+      }
+    }
+
+    const take = Math.min(Math.max(parseInt(limit, 10) || 50, 1), 200);
+    const skip = Math.max(parseInt(offset, 10) || 0, 0);
+
+    const [items, total] = await prisma.$transaction([
+      prisma.session.findMany({
+        where,
+        include: { user: { select: { id: true, email: true, name: true } } },
+        orderBy: { startAt: "desc" },
+        take,
+        skip,
+      }),
+      prisma.session.count({ where }),
+    ]);
+
+    res.json({
+      items,
+      total,
+      limit: take,
+      offset: skip,
+      hasMore: skip + items.length < total,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to load sessions" });
+  }
 });
 
 // Admin: create session
