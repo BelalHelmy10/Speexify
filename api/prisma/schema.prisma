@@ -50,6 +50,8 @@ model Session {
 
     // ✅ New: mark that the 24h reminder was sent
   reminder24hSentAt DateTime?
+  // ✅ New: mark that the 1h reminder was sent
+  reminder1hSentAt  DateTime?
 
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
