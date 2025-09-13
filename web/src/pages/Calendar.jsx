@@ -3,6 +3,7 @@ import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import { format } from "date-fns";
 import axios from "axios";
+import useAuth from "../hooks/useAuth";
 import { fmtInTz } from "../utils/date";
 
 axios.defaults.withCredentials = true;
@@ -16,6 +17,12 @@ export default function CalendarPage() {
   const [events, setEvents] = useState([]); // all sessions
   const [dayEvents, setDayEvents] = useState([]); // sessions for selected day
   const [error, setError] = useState("");
+  // who am I? (role-aware)
+  const { user } = useAuth();
+  // separate store for teacher-assigned sessions
+  const [teachEvents, setTeachEvents] = useState([]);
+  // which tab to show (if teacher): 'learn' | 'teach'
+  const [tab, setTab] = useState("learn");
 
   // load sessions from API
   useEffect(() => {
@@ -35,10 +42,37 @@ export default function CalendarPage() {
     })();
   }, []);
 
-  // recompute selected-day events
+  // load teacher-assigned sessions only if I'm a teacher
   useEffect(() => {
-    setDayEvents(events.filter((e) => sameDay(e.startAt, value)));
-  }, [events, value]);
+    if (!user || user.role !== "teacher") {
+      setTeachEvents([]);
+      return;
+    }
+    (async () => {
+      try {
+        const res = await axios.get(
+          "http://localhost:5050/api/teacher/sessions"
+        );
+        const mapped = res.data.map((s) => ({
+          ...s,
+          startAt: new Date(s.startAt),
+          endAt: s.endAt ? new Date(s.endAt) : null,
+        }));
+        setTeachEvents(mapped);
+      } catch (e) {
+        // do not clobber learner errors; just show nothing on teacher tab
+        console.warn("Failed to load teacher sessions", e?.response?.data || e);
+        setTeachEvents([]);
+      }
+    })();
+  }, [user]);
+
+  // recompute selected-day events based on current tab
+  useEffect(() => {
+    const source =
+      user?.role === "teacher" && tab === "teach" ? teachEvents : events;
+    setDayEvents(source.filter((e) => sameDay(e.startAt, value)));
+  }, [events, teachEvents, value, user, tab]);
 
   return (
     <div className="container-narrow">
@@ -49,6 +83,27 @@ export default function CalendarPage() {
         </p>
       )}
 
+      {/* Teacher/Learner toggle (only for teacher role) */}
+      {user?.role === "teacher" && (
+        <div className="button-row" style={{ margin: "8px 0 16px" }}>
+          <button
+            type="button"
+            className={`btn ${tab === "learn" ? "btn--primary" : "btn--ghost"}`}
+            onClick={() => setTab("learn")}
+          >
+            As learner
+          </button>
+          <button
+            type="button"
+            className={`btn ${tab === "teach" ? "btn--primary" : "btn--ghost"}`}
+            onClick={() => setTab("teach")}
+            style={{ marginLeft: 8 }}
+          >
+            As teacher
+          </button>
+        </div>
+      )}
+
       <div className="calendar-wrap">
         {/* Left: month calendar with dots on days that have sessions */}
         <Calendar
@@ -56,7 +111,11 @@ export default function CalendarPage() {
           onChange={setValue}
           showNeighboringMonth={false} // cleaner look (optional)
           tileContent={({ date }) => {
-            const has = events.some((e) => sameDay(e.startAt, date));
+            const source =
+              user?.role === "teacher" && tab === "teach"
+                ? teachEvents
+                : events;
+            const has = source.some((e) => sameDay(e.startAt, date));
             return has ? <span className="cal-dot" /> : null;
           }}
         />
@@ -81,6 +140,27 @@ export default function CalendarPage() {
                     {format(e.startAt, "p")}
                     {e.endAt ? ` – ${format(e.endAt, "p")}` : ""}
                   </div>
+                  {/* extra context line */}
+                  {user?.role === "teacher" && tab === "teach" ? (
+                    // I'm looking at my teaching assignments → show learner
+                    <div className="meta">
+                      Learner:{" "}
+                      {e.user?.name
+                        ? `${e.user.name} — ${e.user.email}`
+                        : e.user?.email || "—"}
+                    </div>
+                  ) : (
+                    // learner view → show teacher if any
+                    e.teacher && (
+                      <div className="meta">
+                        Teacher:{" "}
+                        {e.teacher.name
+                          ? `${e.teacher.name} — ${e.teacher.email}`
+                          : e.teacher.email}
+                      </div>
+                    )
+                  )}
+
                   {e.meetingUrl && (
                     <a
                       href={e.meetingUrl}

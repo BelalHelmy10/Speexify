@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import useAuth from "../hooks/useAuth";
 import axios from "axios";
 import { fmtInTz } from "../utils/date";
+
 axios.defaults.withCredentials = true;
 
 const fmt = (d) =>
@@ -27,6 +29,15 @@ function Dashboard() {
   const [summary, setSummary] = useState(null);
   const [status, setStatus] = useState("Loading...");
 
+  // ── TEACHER: role + summary state
+  const { user } = useAuth();
+  const [teachSummary, setTeachSummary] = useState({
+    nextTeach: null,
+    upcomingTeachCount: 0,
+    taughtCount: 0,
+  });
+
+  // Learner/admin summary (your existing endpoint)
   useEffect(() => {
     (async () => {
       try {
@@ -38,6 +49,34 @@ function Dashboard() {
       }
     })();
   }, []);
+
+  // Teacher-only summary (next session to teach)
+  useEffect(() => {
+    if (!user || user.role !== "teacher") return;
+    (async () => {
+      try {
+        const { data } = await axios.get(
+          "http://localhost:5050/api/teacher/summary"
+        );
+        setTeachSummary({
+          nextTeach: data?.nextTeach || null,
+          upcomingTeachCount: data?.upcomingTeachCount || 0,
+          taughtCount: data?.taughtCount || 0,
+        });
+      } catch (e) {
+        // Keep quiet on dashboard errors
+        console.warn(
+          "teacher summary failed",
+          e?.response?.data || e?.message || e
+        );
+        setTeachSummary({
+          nextTeach: null,
+          upcomingTeachCount: 0,
+          taughtCount: 0,
+        });
+      }
+    })();
+  }, [user]);
 
   if (status) return <p>{status}</p>;
   if (!summary) return null;
@@ -55,7 +94,55 @@ function Dashboard() {
         <Card title="Total" value={upcomingCount + completedCount} />
       </div>
 
-      {/* Next session */}
+      {/* TEACHER: Next session to teach */}
+      {user?.role === "teacher" && (
+        <div className="panel">
+          <h3>Next session to teach</h3>
+          {!teachSummary.nextTeach ? (
+            <p>No upcoming teaching sessions.</p>
+          ) : (
+            <>
+              <p style={{ margin: "4px 0" }}>
+                <strong>{teachSummary.nextTeach.title}</strong>
+              </p>
+              <p style={{ margin: "4px 0" }}>
+                {fmtInTz(teachSummary.nextTeach.startAt, summary?.timezone)}
+                {teachSummary.nextTeach.endAt
+                  ? ` — ${fmt(teachSummary.nextTeach.endAt)}`
+                  : ""}
+              </p>
+              <p style={{ margin: "4px 0", color: "var(--muted)" }}>
+                Learner:&nbsp;
+                {teachSummary.nextTeach.user?.name
+                  ? `${teachSummary.nextTeach.user.name} — ${teachSummary.nextTeach.user.email}`
+                  : teachSummary.nextTeach.user?.email || "—"}
+              </p>
+              <div className="button-row">
+                {teachSummary.nextTeach.meetingUrl &&
+                canJoin(
+                  teachSummary.nextTeach.startAt,
+                  teachSummary.nextTeach.endAt
+                ) ? (
+                  <a
+                    href={teachSummary.nextTeach.meetingUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="btn btn--primary"
+                  >
+                    Join session
+                  </a>
+                ) : (
+                  <a href="/calendar" className="btn btn--ghost">
+                    View calendar
+                  </a>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Next session (learner/admin) */}
       <div className="panel">
         <h3>Next session</h3>
         {!nextSession ? (

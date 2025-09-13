@@ -12,6 +12,10 @@ function Admin() {
   const [users, setUsers] = useState([]); // learners for the Create form
   const [sessions, setSessions] = useState([]);
 
+  // Teachers for assignment & filtering
+  const [teachers, setTeachers] = useState([]);
+  const [teacherIdFilter, setTeacherIdFilter] = useState("");
+
   // Filters (sessions list)
   const [q, setQ] = useState("");
   const [qDebounced, setQDebounced] = useState("");
@@ -23,6 +27,7 @@ function Admin() {
   // Create form (session)
   const [form, setForm] = useState({
     userId: "",
+    teacherId: "",
     title: "",
     date: "",
     startTime: "",
@@ -36,6 +41,7 @@ function Admin() {
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({
     userId: "",
+    teacherId: "",
     title: "",
     date: "",
     startTime: "",
@@ -136,6 +142,21 @@ function Admin() {
     })();
   }, []);
 
+  // ---------- load teachers for Create form ----------
+  // Load teachers once (active only)
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data } = await axios.get(
+          "http://localhost:5050/api/teachers?active=1"
+        );
+        setTeachers(data || []);
+      } catch (e) {
+        setStatus(e.response?.data?.error || "Failed to load teachers");
+      }
+    })();
+  }, []);
+
   // ---------- debounce search (sessions list) ----------
   useEffect(() => {
     const t = setTimeout(() => setQDebounced(q), 300);
@@ -148,10 +169,11 @@ function Admin() {
     if (qDebounced.trim()) p.set("q", qDebounced.trim());
     if (from) p.set("from", from);
     if (to) p.set("to", to);
+    if (teacherIdFilter) p.set("teacherId", String(teacherIdFilter));
     p.set("limit", "50");
     p.set("offset", "0");
     return p.toString();
-  }, [qDebounced, from, to]);
+  }, [qDebounced, from, to, teacherIdFilter]);
 
   const normalizeSessionsResponse = (data) => {
     if (Array.isArray(data)) return { items: data, total: data.length };
@@ -206,12 +228,14 @@ function Admin() {
         duration: form.endTime ? undefined : Number(form.duration || 60),
         meetingUrl: form.meetingUrl || undefined,
         notes: form.notes || undefined,
+        teacherId: form.teacherId ? Number(form.teacherId) : undefined,
       };
       await axios.post("http://localhost:5050/api/sessions", payload);
       setStatus("Created ✓");
       await reloadSessions();
       setForm((f) => ({
         ...f,
+        teacherId: "",
         title: "",
         startTime: "",
         endTime: "",
@@ -229,6 +253,7 @@ function Admin() {
     setEditingId(row.id);
     setEditForm({
       userId: String(row.user?.id || ""),
+      teacherId: String(row.teacher?.id || ""), // ← NEW
       title: row.title || "",
       date: toDateInput(row.startAt),
       startTime: toTimeInput(row.startAt),
@@ -260,6 +285,7 @@ function Admin() {
         meetingUrl: editForm.meetingUrl || null,
         notes: editForm.notes || null,
         userId: editForm.userId ? Number(editForm.userId) : undefined,
+        teacherId: editForm.teacherId ? Number(editForm.teacherId) : 0, // 0 clears on backend
       };
       await axios.patch(`http://localhost:5050/api/sessions/${id}`, payload);
       setStatus("Updated ✓");
@@ -485,6 +511,27 @@ function Admin() {
             </select>
           </div>
 
+          {/* Teacher (optional) */}
+          <div className="field">
+            <label className="label" htmlFor="teacherId">
+              Teacher
+            </label>
+            <select
+              id="teacherId"
+              name="teacherId"
+              className="select"
+              value={form.teacherId}
+              onChange={onCreateChange}
+            >
+              <option value="">Unassigned</option>
+              {teachers.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name ? `${t.name} — ${t.email}` : t.email}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <div className="field">
             <label className="label" htmlFor="title">
               Title *
@@ -611,6 +658,21 @@ function Admin() {
               onChange={(e) => setQ(e.target.value)}
               aria-label="Search"
             />
+
+            <select
+              className="select"
+              value={teacherIdFilter}
+              onChange={(e) => setTeacherIdFilter(e.target.value)}
+              aria-label="Teacher"
+            >
+              <option value="">All teachers</option>
+              {teachers.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name ? `${t.name} — ${t.email}` : t.email}
+                </option>
+              ))}
+            </select>
+
             <input
               type="date"
               className="input"
@@ -639,6 +701,7 @@ function Admin() {
                 <tr>
                   <th>ID</th>
                   <th>Learner</th>
+                  <th>Teacher</th>
                   <th>Title</th>
                   <th>Start</th>
                   <th>End</th>
@@ -666,6 +729,23 @@ function Admin() {
                           ))}
                         </select>
                       </td>
+                      {/* Teacher (edit) */}
+                      <td>
+                        <select
+                          name="teacherId"
+                          className="select"
+                          value={editForm.teacherId || ""}
+                          onChange={onEditChange}
+                        >
+                          <option value="">Unassigned</option>
+                          {teachers.map((t) => (
+                            <option key={t.id} value={t.id}>
+                              {t.name ? `${t.name} — ${t.email}` : t.email}
+                            </option>
+                          ))}
+                        </select>
+                      </td>
+
                       <td>
                         <input
                           name="title"
@@ -750,6 +830,14 @@ function Admin() {
                           ? `${s.user.name} — ${s.user.email}`
                           : s.user?.email}
                       </td>
+                      {/* Teacher (read) */}
+                      <td>
+                        {s.teacher
+                          ? s.teacher.name
+                            ? `${s.teacher.name} — ${s.teacher.email}`
+                            : s.teacher.email
+                          : "—"}
+                      </td>
                       <td>{s.title}</td>
                       <td>{fmt(s.startAt)}</td>
                       <td>{s.endAt ? fmt(s.endAt) : "—"}</td>
@@ -795,6 +883,130 @@ function Admin() {
           </div>
         </div>
       </section>
+      {/* Teacher workload (admin) */}
+      <section className="card">
+        <div className="card__header card__header--row">
+          <h2 className="card__title">Teacher workload</h2>
+          <div className="filters">
+            <select
+              className="select"
+              value={teacherIdFilter}
+              onChange={(e) => setTeacherIdFilter(e.target.value)}
+              aria-label="Teacher"
+            >
+              <option value="">All teachers</option>
+              {teachers.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name ? `${t.name} — ${t.email}` : t.email}
+                </option>
+              ))}
+            </select>
+            <input
+              type="date"
+              className="input"
+              value={from}
+              onChange={(e) => setFrom(e.target.value)}
+              aria-label="From date"
+            />
+            <input
+              type="date"
+              className="input"
+              value={to}
+              onChange={(e) => setTo(e.target.value)}
+              aria-label="To date"
+            />
+          </div>
+        </div>
+
+        <TeacherWorkload teacherId={teacherIdFilter} from={from} to={to} />
+      </section>
+    </div>
+  );
+}
+
+function TeacherWorkload({ teacherId, from, to }) {
+  const [rows, setRows] = useState([]);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      setBusy(true);
+      try {
+        const p = new URLSearchParams();
+        if (teacherId) p.set("teacherId", String(teacherId));
+        if (from) p.set("from", from);
+        if (to) p.set("to", to);
+        const { data } = await axios.get(
+          `http://localhost:5050/api/admin/teachers/workload?${p.toString()}`
+        );
+        setRows(Array.isArray(data) ? data : []);
+      } finally {
+        setBusy(false);
+      }
+    })();
+  }, [teacherId, from, to]);
+
+  return (
+    <div className="table">
+      <div className="table__scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Teacher</th>
+              <th>Sessions</th>
+              <th>Hours</th>
+              <th>Rate/hr</th>
+              <th>Rate/session</th>
+              <th>Payroll (hourly)</th>
+              <th>Payroll (per session)</th>
+              <th>Applied</th>
+            </tr>
+          </thead>
+          <tbody>
+            {busy && (
+              <tr>
+                <td colSpan={8} className="empty">
+                  Loading…
+                </td>
+              </tr>
+            )}
+            {!busy && rows.length === 0 && (
+              <tr>
+                <td colSpan={8} className="empty">
+                  No data
+                </td>
+              </tr>
+            )}
+            {rows.map((r) => (
+              <tr key={r.teacher.id}>
+                <td>
+                  {r.teacher.name
+                    ? `${r.teacher.name} — ${r.teacher.email}`
+                    : r.teacher.email}
+                </td>
+                <td>{r.sessions}</td>
+                <td>{r.hours}</td>
+                <td>
+                  {r.rateHourlyCents
+                    ? `$${(r.rateHourlyCents / 100).toFixed(2)}`
+                    : "—"}
+                </td>
+                <td>
+                  {r.ratePerSessionCents
+                    ? `$${(r.ratePerSessionCents / 100).toFixed(2)}`
+                    : "—"}
+                </td>
+                <td>{`$${r.payrollHourlyUSD.toFixed(2)}`}</td>
+                <td>{`$${r.payrollPerSessionUSD.toFixed(2)}`}</td>
+                <td>
+                  <strong>{`$${r.payrollAppliedUSD.toFixed(2)}`}</strong>{" "}
+                  <small>({r.method})</small>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

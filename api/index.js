@@ -116,6 +116,11 @@ async function randomHashedPassword() {
   return await bcrypt.hash(rand, 10);
 }
 
+// Cents → number of dollars (float) for quick display (admin only UIs)
+function centsToDollars(cents) {
+  return typeof cents === "number" ? Math.round(cents) / 100 : 0;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // NEW (Step 2): unified “public user” projection + audit helper (used later)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -125,7 +130,9 @@ const publicUserSelect = {
   name: true,
   role: true,
   timezone: true,
-  isDisabled: true, // requires schema change from Step 1
+  isDisabled: true,
+  rateHourlyCents: true,
+  ratePerSessionCents: true,
 };
 
 /** Minimal audit helper (no-op if Audit model not added yet). */
@@ -958,6 +965,52 @@ app.post(
   }
 );
 
+// PATCH teacher rates (cents). Body: { rateHourlyCents?, ratePerSessionCents? }
+app.patch(
+  "/api/admin/teachers/:id/rates",
+  requireAuth,
+  requireAdmin,
+  async (req, res) => {
+    const id = Number(req.params.id);
+    const { rateHourlyCents, ratePerSessionCents } = req.body;
+
+    const teacher = await prisma.user.findUnique({
+      where: { id },
+      select: { id: true, role: true },
+    });
+    if (!teacher) return res.status(404).json({ error: "Not found" });
+    if (teacher.role !== "teacher")
+      return res.status(400).json({ error: "User is not a teacher" });
+
+    const updated = await prisma.user.update({
+      where: { id },
+      data: {
+        ...(rateHourlyCents !== undefined
+          ? { rateHourlyCents: Number(rateHourlyCents) || 0 }
+          : {}),
+        ...(ratePerSessionCents !== undefined
+          ? { ratePerSessionCents: Number(ratePerSessionCents) || 0 }
+          : {}),
+      },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        rateHourlyCents: true,
+        ratePerSessionCents: true,
+      },
+    });
+
+    await audit(req.user.id, "teacher_rates_update", "User", id, {
+      rateHourlyCents: updated.rateHourlyCents,
+      ratePerSessionCents: updated.ratePerSessionCents,
+    });
+
+    res.json(updated);
+  }
+);
+
 /* ========================================================================== */
 /*                             SESSIONS (LESSONS)                              */
 /* ========================================================================== */
@@ -967,6 +1020,9 @@ app.get("/api/sessions", requireAuth, async (req, res) => {
   try {
     const sessions = await prisma.session.findMany({
       where: { userId: req.viewUserId }, // ← view-as aware
+      include: {
+        teacher: { select: { id: true, name: true, email: true } }, // 👈 include teacher
+      },
       orderBy: { startAt: "asc" },
     });
     res.json(sessions);
@@ -976,27 +1032,95 @@ app.get("/api/sessions", requireAuth, async (req, res) => {
   }
 });
 
+// Teacher: sessions assigned to me (view-as aware)
+app.get("/api/teacher/sessions", requireAuth, async (req, res) => {
+  try {
+    const sessions = await prisma.session.findMany({
+      where: { teacherId: req.viewUserId },
+      include: {
+        user: { select: { id: true, email: true, name: true } }, // learner
+      },
+      orderBy: { startAt: "asc" },
+    });
+    res.json(sessions);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "Failed to load teacher sessions" });
+  }
+});
+
+/* ========================================================================== */
+/*                          TEACHER SUMMARY (next)                            */
+/*  GET /api/teacher/summary                                                  */
+/*  Returns the next upcoming session this teacher will teach, plus counts.   */
+/* ========================================================================== */
+app.get("/api/teacher/summary", requireAuth, async (req, res) => {
+  const now = new Date();
+  try {
+    const nextTeach = await prisma.session.findFirst({
+      where: { teacherId: req.viewUserId, startAt: { gt: now } },
+      orderBy: { startAt: "asc" },
+      select: {
+        id: true,
+        title: true,
+        startAt: true,
+        endAt: true,
+        meetingUrl: true,
+        user: { select: { id: true, name: true, email: true } }, // learner
+      },
+    });
+
+    const upcomingTeachCount = await prisma.session.count({
+      where: { teacherId: req.viewUserId, startAt: { gt: now } },
+    });
+
+    const taughtCount = await prisma.session.count({
+      where: {
+        teacherId: req.viewUserId,
+        OR: [
+          { endAt: { lt: now } },
+          { AND: [{ endAt: null }, { startAt: { lt: now } }] },
+        ],
+      },
+    });
+
+    res.json({ nextTeach, upcomingTeachCount, taughtCount });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "Failed to load teacher summary" });
+  }
+});
+
 // Admin: list all sessions (with learner info + filters)
+// Admin: list all sessions (with learner + teacher info)
+// GET /api/admin/sessions?q=&userId=&teacherId=&from=&to=&limit=&offset=
 app.get("/api/admin/sessions", requireAuth, requireAdmin, async (req, res) => {
   try {
     const {
       q = "",
       userId = "",
-      from = "",
-      to = "",
+      teacherId = "",
+      from = "", // YYYY-MM-DD
+      to = "", // YYYY-MM-DD
       limit = "50",
       offset = "0",
     } = req.query;
+
     const where = {};
 
     if (userId) where.userId = Number(userId);
+    if (teacherId) where.teacherId = Number(teacherId);
+
     if (q) {
       where.OR = [
         { title: { contains: q, mode: "insensitive" } },
         { user: { email: { contains: q, mode: "insensitive" } } },
         { user: { name: { contains: q, mode: "insensitive" } } },
+        { teacher: { email: { contains: q, mode: "insensitive" } } },
+        { teacher: { name: { contains: q, mode: "insensitive" } } },
       ];
     }
+
     if (from || to) {
       where.startAt = {};
       if (from) where.startAt.gte = new Date(from);
@@ -1013,7 +1137,10 @@ app.get("/api/admin/sessions", requireAuth, requireAdmin, async (req, res) => {
     const [items, total] = await prisma.$transaction([
       prisma.session.findMany({
         where,
-        include: { user: { select: { id: true, email: true, name: true } } },
+        include: {
+          user: { select: { id: true, email: true, name: true } },
+          teacher: { select: { id: true, email: true, name: true } },
+        },
         orderBy: { startAt: "desc" },
         take,
         skip,
@@ -1033,6 +1160,89 @@ app.get("/api/admin/sessions", requireAuth, requireAdmin, async (req, res) => {
     res.status(500).json({ error: "Failed to load sessions" });
   }
 });
+
+// Admin: teacher workload summary
+// GET /api/admin/teachers/workload?from=&to=&teacherId=
+app.get(
+  "/api/admin/teachers/workload",
+  requireAuth,
+  requireAdmin,
+  async (req, res) => {
+    const { from = "", to = "", teacherId = "" } = req.query;
+
+    const where = {};
+    if (teacherId) where.teacherId = Number(teacherId);
+    if (from || to) {
+      where.startAt = {};
+      if (from) where.startAt.gte = new Date(from);
+      if (to) {
+        const end = new Date(to);
+        end.setDate(end.getDate() + 1);
+        where.startAt.lt = end;
+      }
+    }
+
+    const rows = await prisma.session.findMany({
+      where: { ...where, teacherId: { not: null } },
+      include: {
+        teacher: {
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            rateHourlyCents: true,
+            ratePerSessionCents: true,
+          },
+        },
+      },
+      orderBy: { startAt: "asc" },
+    });
+
+    // group in JS (simpler than Prisma groupBy preview)
+    const map = new Map(); // teacherId -> { teacher, sessions, minutes }
+    for (const s of rows) {
+      const t = s.teacher;
+      const key = t.id;
+      const end = s.endAt ? new Date(s.endAt) : null;
+      const start = new Date(s.startAt);
+      const minutes = end ? Math.max(0, Math.round((end - start) / 60000)) : 60; // default 60 if missing
+      if (!map.has(key)) map.set(key, { teacher: t, sessions: 0, minutes: 0 });
+      const agg = map.get(key);
+      agg.sessions += 1;
+      agg.minutes += minutes;
+    }
+
+    const result = Array.from(map.values()).map(
+      ({ teacher, sessions, minutes }) => {
+        const hourly = teacher.rateHourlyCents || 0;
+        const perSess = teacher.ratePerSessionCents || 0;
+        const hourlyCost = (minutes / 60) * hourly;
+        const perSessCost = sessions * perSess;
+        const method = hourly ? "hourly" : perSess ? "per_session" : "none";
+        const applied =
+          method === "hourly"
+            ? hourlyCost
+            : method === "per_session"
+            ? perSessCost
+            : 0;
+        return {
+          teacher: { id: teacher.id, name: teacher.name, email: teacher.email },
+          sessions,
+          minutes,
+          hours: +(minutes / 60).toFixed(2),
+          rateHourlyCents: hourly,
+          ratePerSessionCents: perSess,
+          payrollHourlyUSD: centsToDollars(hourlyCost),
+          payrollPerSessionUSD: centsToDollars(perSessCost),
+          payrollAppliedUSD: centsToDollars(applied),
+          method,
+        };
+      }
+    );
+
+    res.json(result);
+  }
+);
 
 // Admin: create session
 app.post("/api/sessions", requireAuth, requireAdmin, async (req, res) => {
@@ -1068,7 +1278,7 @@ app.post("/api/sessions", requireAuth, requireAdmin, async (req, res) => {
   }
 
   try {
-    const sessionRow = await prisma.session.create({
+    const session = await prisma.session.create({
       data: {
         title,
         startAt,
@@ -1076,9 +1286,16 @@ app.post("/api/sessions", requireAuth, requireAdmin, async (req, res) => {
         meetingUrl: meetingUrl || null,
         notes: notes || null,
         user: { connect: { id: Number(userId) } },
+        ...(req.body.teacherId
+          ? { teacher: { connect: { id: Number(req.body.teacherId) } } }
+          : {}),
+      },
+      include: {
+        user: { select: { id: true, email: true, name: true } },
+        teacher: { select: { id: true, email: true, name: true } },
       },
     });
-    res.status(201).json(sessionRow);
+    res.status(201).json(session);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to create session" });
@@ -1104,6 +1321,13 @@ app.patch("/api/sessions/:id", requireAuth, requireAdmin, async (req, res) => {
   if (meetingUrl !== undefined) data.meetingUrl = meetingUrl || null;
   if (notes !== undefined) data.notes = notes || null;
   if (userId) data.user = { connect: { id: Number(userId) } };
+
+  // teacherId can be set, changed, or cleared
+  if (req.body.teacherId !== undefined) {
+    const t = Number(req.body.teacherId);
+    if (t) data.teacher = { connect: { id: t } };
+    else data.teacher = { disconnect: true }; // when "" or 0 is sent
+  }
 
   if (date && startTime) {
     const startAt = new Date(`${date}T${startTime}:00`);
@@ -1198,6 +1422,28 @@ app.get("/api/users", requireAuth, async (req, res) => {
     orderBy: { email: "asc" },
   });
   res.json(users);
+});
+
+// Teachers list (active + disabled, filterable by ?active=1)
+// GET /api/teachers?active=1
+app.get("/api/teachers", requireAuth, async (req, res) => {
+  const onlyActive = String(req.query.active || "") === "1";
+  const where = { role: "teacher" };
+  if (onlyActive) where.isDisabled = false;
+
+  const teachers = await prisma.user.findMany({
+    where,
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      isDisabled: true,
+      rateHourlyCents: true,
+      ratePerSessionCents: true,
+    },
+    orderBy: [{ isDisabled: "asc" }, { email: "asc" }],
+  });
+  res.json(teachers);
 });
 
 // Change password (logged-in user ONLY; not affected by view-as)

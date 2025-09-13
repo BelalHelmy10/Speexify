@@ -33,11 +33,20 @@ model User {
   timezone       String?
   isDisabled     Boolean  @default(false)     // 👈 NEW
 
+    // ── Teacher rates (used for workload/payroll exports) ─────────────────────
+  rateHourlyCents       Int?    // e.g. 3500 = $35.00 / hour
+  ratePerSessionCents   Int?    // e.g. 2000 = $20.00 / session
+
+
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
   sessions       Session[]
   audits         Audit[]  @relation("Audit_actor")
+
+  teachingSessions  Session[] @relation("SessionTeacher")
+
+  @@index([role])
 }
 
 model Audit {
@@ -65,7 +74,11 @@ model Session {
   user       User     @relation(fields: [userId], references: [id])
   userId     Int
 
-    // ✅ New: mark that the 24h reminder was sent
+    // ── Assigned teacher (optional) ───────────────────────────────────────────
+  teacher    User?    @relation("SessionTeacher", fields: [teacherId], references: [id])
+  teacherId  Int?
+
+  // ✅ New: mark that the 24h reminder was sent
   reminder24hSentAt DateTime?
   // ✅ New: mark that the 1h reminder was sent
   reminder1hSentAt  DateTime?
