@@ -26,6 +26,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Settings from "./pages/Settings";
 import ForgotPassword from "./pages/ForgotPassword";
 import Careers from "./pages/Careers";
+import AdminPackages from "./pages/AdminPackages";
 
 function App() {
   return (
@@ -74,6 +75,7 @@ function App() {
              ───────────────────────────────────────────────────────────────── */}
           <Route element={<ProtectedRoute role="admin" />}>
             <Route path="/admin" element={<Admin />} />
+            <Route path="/admin/packages" element={<AdminPackages />} />
           </Route>
         </Route>
 

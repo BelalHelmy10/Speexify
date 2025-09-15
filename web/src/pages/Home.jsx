@@ -91,6 +91,171 @@ function Home() {
         </div>
       </section>
 
+      {/* ─────────────────────────────────────────
+          NEW: STATS STRIP (lightweight social proof)
+      ───────────────────────────────────────── */}
+      <section className="spx-home-stats">
+        <div className="container spx-home-stats__grid">
+          <div className="spx-home-stats__item">
+            <div className="spx-home-stats__num">98%</div>
+            <div className="spx-home-stats__label">report higher clarity</div>
+          </div>
+          <div className="spx-home-stats__item">
+            <div className="spx-home-stats__num">2.4×</div>
+            <div className="spx-home-stats__label">faster meeting outcomes</div>
+          </div>
+          <div className="spx-home-stats__item">
+            <div className="spx-home-stats__num">50k+</div>
+            <div className="spx-home-stats__label">
+              coaching hours delivered
+            </div>
+          </div>
+          <div className="spx-home-stats__item">
+            <div className="spx-home-stats__num">35+</div>
+            <div className="spx-home-stats__label">industry-aligned tracks</div>
+          </div>
+        </div>
+      </section>
+
+      {/* ─────────────────────────────────────────
+          NEW: HOW IT WORKS (3-step)
+      ───────────────────────────────────────── */}
+      <section className="spx-home-how">
+        <div className="container">
+          <h2 className="spx-home-how__title">How it works</h2>
+          <div className="spx-home-how__grid">
+            <HowStep
+              step="01"
+              title="Assess"
+              text="Complete a quick skills & goals survey to personalize your plan."
+              img="/images/placeholder-assess.jpg"
+            />
+            <HowStep
+              step="02"
+              title="Coach"
+              text="Meet 1:1 with a coach matched to your role & industry."
+              img="/images/placeholder-coach.jpg"
+            />
+            <HowStep
+              step="03"
+              title="Apply"
+              text="Practice with real work scenarios and measure improvement."
+              img="/images/placeholder-apply.jpg"
+            />
+          </div>
+          <div className="spx-home-how__cta">
+            <Link className="btn btn--primary" to="/register">
+              Start your assessment
+            </Link>
+            <Link className="btn btn--ghost" to="/contact">
+              Ask a question
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ─────────────────────────────────────────
+          NEW: CURRICULUM PREVIEW (cards)
+      ───────────────────────────────────────── */}
+      <section className="spx-home-curriculum">
+        <div className="container">
+          <div className="spx-home-curriculum__head">
+            <h2>What you’ll learn</h2>
+            <p className="spx-home-curriculum__sub">
+              Practical, job-ready modules you can apply the same day.
+            </p>
+          </div>
+
+          <div className="spx-home-curriculum__grid">
+            <CurriculumCard
+              title="Client communication"
+              desc="Run structured calls, handle objections, and summarize clearly."
+              img="/images/placeholder-client.jpg"
+            />
+            <CurriculumCard
+              title="Presentations"
+              desc="Build confident narratives with visuals and engaging delivery."
+              img="/images/placeholder-present.jpg"
+            />
+            <CurriculumCard
+              title="Email & async"
+              desc="Write crisp, professional messages that get quick responses."
+              img="/images/placeholder-email.jpg"
+            />
+            <CurriculumCard
+              title="Leadership"
+              desc="Drive decisions, give feedback, and influence across teams."
+              img="/images/placeholder-leadership.jpg"
+            />
+          </div>
+
+          <div className="spx-home-curriculum__more">
+            <Link className="btn btn--ghost" to="/packages">
+              See full track list
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ─────────────────────────────────────────
+          NEW: COACHES SPOTLIGHT
+      ───────────────────────────────────────── */}
+      <section className="spx-home-coaches">
+        <div className="container">
+          <h2 className="spx-home-coaches__title">Meet a few of our coaches</h2>
+          <div className="spx-home-coaches__grid">
+            <CoachCard
+              name="Adriana K."
+              role="Senior Communication Coach"
+              bio="Former enterprise trainer; specializes in client-facing roles."
+              img="/images/placeholder-coach-1.jpg"
+            />
+            <CoachCard
+              name="Samir B."
+              role="Presentation & Storytelling"
+              bio="Ex-consultant; helps craft persuasive narratives for execs."
+              img="/images/placeholder-coach-2.jpg"
+            />
+            <CoachCard
+              name="Lina T."
+              role="Leadership Communication"
+              bio="Led global teams; mentors managers on clarity and influence."
+              img="/images/placeholder-coach-3.jpg"
+            />
+          </div>
+          <p className="spx-home-coaches__note">
+            Coaches shown are examples. We’ll match you with the best fit for
+            your goals.
+          </p>
+        </div>
+      </section>
+
+      {/* ─────────────────────────────────────────
+          NEW: CASE STUDIES / MINI STORIES
+      ───────────────────────────────────────── */}
+      <section className="spx-home-cases">
+        <div className="container">
+          <h2 className="spx-home-cases__title">Real outcomes</h2>
+          <div className="spx-home-cases__grid">
+            <CaseCard
+              logo="/images/logo-indeed.svg"
+              title="Onboarding made faster"
+              text="A support team reduced average handle time by 22% with clearer call structures."
+            />
+            <CaseCard
+              logo="/images/logo-amazon.svg"
+              title="Meetings that decide"
+              text="A product trio cut weekly syncs by 30% using agenda-first updates."
+            />
+            <CaseCard
+              logo="/images/logo-allianz.svg"
+              title="Sales confidence"
+              text="Reps improved objection handling and boosted close rates in Q2."
+            />
+          </div>
+        </div>
+      </section>
+
       {/* ===== TESTIMONIALS (simple, swappable) ===== */}
       <section className="testimonials">
         <div className="container">
@@ -108,6 +273,71 @@ function Home() {
               author="Javier R., Product Manager"
             />
           </div>
+        </div>
+      </section>
+
+      {/* ─────────────────────────────────────────
+          NEW: FAQ (no JS, accessible)
+      ───────────────────────────────────────── */}
+      <section className="spx-home-faq">
+        <div className="container">
+          <h2 className="spx-home-faq__title">Frequently asked questions</h2>
+          <div className="spx-home-faq__grid">
+            <details className="spx-home-faq__item">
+              <summary>How do you match me with a coach?</summary>
+              <p>
+                We consider your goals, current level, industry, and schedule to
+                suggest the best coach profiles for you or your team.
+              </p>
+            </details>
+            <details className="spx-home-faq__item">
+              <summary>Can I switch coaches later?</summary>
+              <p>
+                Absolutely. If the fit isn’t right, you can switch anytime
+                without losing progress.
+              </p>
+            </details>
+            <details className="spx-home-faq__item">
+              <summary>Do you offer corporate packages?</summary>
+              <p>
+                Yes — we support budget controls, reporting, and manager
+                dashboards for teams.
+              </p>
+            </details>
+            <details className="spx-home-faq__item">
+              <summary>What’s the time commitment?</summary>
+              <p>
+                Most learners do 1–2 sessions per week plus short, role-based
+                practice.
+              </p>
+            </details>
+          </div>
+        </div>
+      </section>
+
+      {/* ─────────────────────────────────────────
+          NEW: NEWSLETTER / SECONDARY CTA
+      ───────────────────────────────────────── */}
+      <section className="spx-home-newsletter">
+        <div className="container spx-home-newsletter__inner">
+          <div className="spx-home-newsletter__copy">
+            <h3>Get actionable communication tips</h3>
+            <p>Monthly insights from coaches — no spam.</p>
+          </div>
+          <form
+            className="spx-home-newsletter__form"
+            onSubmit={(e) => e.preventDefault()}
+          >
+            <input
+              type="email"
+              placeholder="Enter your email"
+              aria-label="Email"
+              className="spx-home-newsletter__input"
+            />
+            <button className="btn btn--primary" type="submit">
+              Subscribe
+            </button>
+          </form>
         </div>
       </section>
 
@@ -134,6 +364,7 @@ function Home() {
   );
 }
 
+/* ========== Existing components ========== */
 function Feature({ title, text }) {
   return (
     <div className="feature">
@@ -153,6 +384,63 @@ function Quote({ quote, author }) {
       <blockquote>“{quote}”</blockquote>
       <figcaption>— {author}</figcaption>
     </figure>
+  );
+}
+
+/* ========== New local components (scoped to this file) ========== */
+function HowStep({ step, title, text, img }) {
+  return (
+    <div className="spx-home-how__card">
+      <div className="spx-home-how__media">
+        <img src={img} alt="" />
+        <span className="spx-home-how__badge">{step}</span>
+      </div>
+      <div className="spx-home-how__body">
+        <h3>{title}</h3>
+        <p>{text}</p>
+      </div>
+    </div>
+  );
+}
+
+function CurriculumCard({ title, desc, img }) {
+  return (
+    <article className="spx-home-curriculum__card">
+      <div className="spx-home-curriculum__thumb">
+        <img src={img} alt="" />
+      </div>
+      <div className="spx-home-curriculum__content">
+        <h3>{title}</h3>
+        <p>{desc}</p>
+      </div>
+    </article>
+  );
+}
+
+function CoachCard({ name, role, bio, img }) {
+  return (
+    <div className="spx-home-coaches__card">
+      <img className="spx-home-coaches__avatar" src={img} alt={name} />
+      <div className="spx-home-coaches__info">
+        <h3>{name}</h3>
+        <p className="spx-home-coaches__role">{role}</p>
+        <p className="spx-home-coaches__bio">{bio}</p>
+      </div>
+    </div>
+  );
+}
+
+function CaseCard({ logo, title, text }) {
+  return (
+    <div className="spx-home-cases__card">
+      <div className="spx-home-cases__logo">
+        <img src={logo} alt="" />
+      </div>
+      <div className="spx-home-cases__content">
+        <h3>{title}</h3>
+        <p>{text}</p>
+      </div>
+    </div>
   );
 }
 

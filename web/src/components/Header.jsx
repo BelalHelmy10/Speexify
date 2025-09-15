@@ -43,7 +43,7 @@ export default function Header() {
   // ───────────────────────────────────────────────────────────────────────────
   // Navigation models: public (logged out) and authenticated variants
   // - "learner" is the base for all signed-in users
-  // - "adminExtra" is inserted after Dashboard/Calendar for admins
+  // - "adminExtra" adds Admin pages (now includes Admin · Packages)
   // ───────────────────────────────────────────────────────────────────────────
   const loggedOut = [
     { to: "/", label: "Home" },
@@ -60,12 +60,16 @@ export default function Header() {
     { to: "/settings", label: "Settings" },
   ];
 
-  const adminExtra = [{ to: "/admin", label: "Admin" }];
+  // ⬇️ ADDED: link to the new admin packages manager
+  const adminExtra = [
+    { to: "/admin", label: "Admin" },
+    { to: "/admin/packages", label: "Admin · Packages" },
+  ];
 
   // ───────────────────────────────────────────────────────────────────────────
   // Final link list:
   // - While checking auth: show public links (prevents flicker)
-  // - If admin: insert Admin between Calendar and Settings
+  // - If admin: insert Admin links between Calendar and Settings
   // ───────────────────────────────────────────────────────────────────────────
   const links =
     checking || !user

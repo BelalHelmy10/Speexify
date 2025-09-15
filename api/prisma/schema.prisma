@@ -14,14 +14,45 @@ datasource db {
   directUrl = env("DIRECT_URL")   // <-- important for Neon
 }
 
+// Add these enums (top-level, once)
+enum Audience {
+  INDIVIDUAL
+  CORPORATE
+}
+
+enum PriceType {
+  PER_SESSION
+  BUNDLE
+  CUSTOM
+}
+
+
 model Package {
-  id          Int      @id @default(autoincrement())
-  title       String
-  description String?
-  priceUSD    Int
-  features    String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id             Int       @id @default(autoincrement())
+  title          String
+  description    String?
+
+  // Pricing (now optional so "Custom" plans work)
+  priceUSD       Int?      // per-session or per-pack price (nullable)
+  startingAtUSD  Int?      // for "From $X" label (corporate)
+
+  // Meta
+  priceType      PriceType @default(BUNDLE)   // PER_SESSION | BUNDLE | CUSTOM
+  audience       Audience  @default(INDIVIDUAL)
+  isPopular      Boolean   @default(false)
+  active         Boolean   @default(true)
+  sortOrder      Int       @default(0)
+
+  // Format details
+  sessionsPerPack Int?
+  durationMin     Int?
+  image           String?   // optional image URL
+
+  // Keep your previous "features" field (newline-separated bullets)
+  features       String?
+
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 }
 
 model User {

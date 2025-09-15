@@ -1,0 +1,209 @@
+/* Page shell */
+.contact-hero {
+  background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+  padding: 64px 0 32px;
+
+  &__content {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  &__title {
+    font-size: 40px;
+    line-height: 1.1;
+    margin: 0 0 8px;
+    color: #0f172a;
+  }
+  &__subtitle {
+    color: #475569;
+    max-width: 720px;
+    margin: 0 0 16px;
+  }
+  &__actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 12px;
+  }
+}
+
+.contact-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 24px;
+  margin: 28px auto 40px;
+  max-width: 1100px;
+
+  @media (max-width: 960px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Form card */
+.contact-form form {
+  margin-top: 12px;
+}
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 12px;
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.label {
+  font-weight: 600;
+  color: #0f172a;
+}
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+}
+.form-status {
+  color: #475569;
+}
+
+/* Sidebar */
+.contact-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+.list__title {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.pill {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #0f172a;
+  font-size: 12px;
+}
+.kvs {
+  display: grid;
+  gap: 10px;
+}
+.kvs > div {
+  display: flex;
+  justify-content: space-between;
+  color: #0f172a;
+}
+.kvs > div span {
+  color: #64748b;
+}
+.social {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Lanes */
+.lanes {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin: 8px auto 40px;
+  max-width: 1100px;
+  @media (max-width: 960px) {
+    grid-template-columns: 1fr;
+  }
+}
+.lane {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 20px;
+}
+.lane h3 {
+  margin: 0 0 6px;
+}
+.lane p {
+  color: #475569;
+  margin: 0 0 10px;
+}
+
+/* Map */
+.contact-map {
+  background: #f8fafc;
+  padding: 32px 0;
+}
+.contact-map__inner {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 20px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+@media (max-width: 960px) {
+  .contact-map__inner {
+    grid-template-columns: 1fr;
+  }
+}
+.map-placeholder {
+  height: 260px;
+  border-radius: 16px;
+  border: 1px dashed #cbd5e1;
+  background: #fff;
+  display: grid;
+  place-items: center;
+  color: #94a3b8;
+}
+
+/* FAQ */
+.faq {
+  margin: 40px auto;
+  max-width: 900px;
+}
+.faq__title {
+  margin-bottom: 12px;
+}
+.accordion__item {
+  border-bottom: 1px solid #e2e8f0;
+}
+.accordion__q {
+  width: 100%;
+  text-align: left;
+  padding: 14px 0;
+  font-weight: 600;
+  color: #0f172a;
+}
+.accordion__a {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.25s ease;
+  color: #475569;
+}
+.accordion__item.is-open .accordion__a {
+  max-height: 200px;
+  padding-bottom: 12px;
+}
+
+/* Utilities (align with your existing system) */
+.container {
+  padding: 0 16px;
+}
+.card__subtitle {
+  color: #64748b;
+  margin-top: 4px;
+}
+.link {
+  text-decoration: underline;
+}

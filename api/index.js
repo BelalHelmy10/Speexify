@@ -196,13 +196,70 @@ app.get("/api/message", (_req, res) =>
 /*                             PUBLIC: PACKAGES                                */
 /* ========================================================================== */
 
-app.get("/api/packages", async (_req, res) => {
+// Keep the section header comment you already have
+app.get("/api/packages", async (req, res) => {
   try {
-    const packages = await prisma.package.findMany();
-    res.json(packages);
+    const aud = String(req.query?.audience || "").toUpperCase();
+    const where = { active: true };
+    if (aud === "INDIVIDUAL" || aud === "CORPORATE") where.audience = aud;
+
+    const packages = await prisma.package.findMany({
+      where,
+      orderBy: [{ sortOrder: "asc" }, { priceUSD: "asc" }],
+      // return everything the frontend might need
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        priceUSD: true,
+        startingAtUSD: true,
+        priceType: true,
+        audience: true,
+        isPopular: true,
+        active: true,
+        sortOrder: true,
+        sessionsPerPack: true,
+        durationMin: true,
+        image: true,
+        features: true,
+      },
+    });
+
+    // harmonize naming with frontend (it expects "featuresRaw")
+    const mapped = packages.map((p) => ({ ...p, featuresRaw: p.features }));
+    res.json(mapped);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Failed to fetch packages" });
+  }
+});
+
+// POST /api/contact  -> emails the team (replace addresses as needed)
+app.post("/api/contact", async (req, res) => {
+  const { name, email, company, phone, role, topic, budget, message } =
+    req.body || {};
+  if (!name || !email || !message)
+    return res.status(400).json({ error: "Missing required fields" });
+
+  const html = `
+    <h2>New contact form message</h2>
+    <p><b>Name:</b> ${name}</p>
+    <p><b>Email:</b> ${email}</p>
+    <p><b>Company:</b> ${company || "-"}</p>
+    <p><b>Phone:</b> ${phone || "-"}</p>
+    <p><b>Role:</b> ${role || "-"}</p>
+    <p><b>Topic:</b> ${topic || "-"}</p>
+    <p><b>Budget:</b> ${budget || "-"}</p>
+    <hr/>
+    <pre style="font: inherit; white-space: pre-wrap;">${message}</pre>
+  `;
+
+  try {
+    await sendEmail("hello@speexify.com", `[Contact] ${topic} — ${name}`, html);
+    res.json({ ok: true });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "Failed to send" });
   }
 });
 
@@ -815,6 +872,153 @@ app.post("/api/admin/users", requireAuth, requireAdmin, async (req, res) => {
   } catch (err) {
     console.error("admin.createUser error:", err);
     res.status(500).json({ error: "Failed to create user" });
+  }
+});
+
+/* ========================================================================== */
+/*                               ADMIN: PACKAGES                              */
+/* ========================================================================== */
+
+// GET /api/admin/packages?audience=&q=&active=
+app.get("/api/admin/packages", requireAdmin, async (req, res) => {
+  try {
+    const { audience = "", q = "", active = "" } = req.query;
+    const where = {};
+
+    if (audience === "INDIVIDUAL" || audience === "CORPORATE")
+      where.audience = audience;
+    if (active === "true") where.active = true;
+    if (active === "false") where.active = false;
+
+    if (q) {
+      where.OR = [
+        { title: { contains: q, mode: "insensitive" } },
+        { description: { contains: q, mode: "insensitive" } },
+        { features: { contains: q, mode: "insensitive" } },
+      ];
+    }
+
+    const items = await prisma.package.findMany({
+      where,
+      orderBy: [{ audience: "asc" }, { sortOrder: "asc" }, { id: "asc" }],
+    });
+
+    res.json(items);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to load packages" });
+  }
+});
+
+// POST /api/admin/packages
+app.post("/api/admin/packages", requireAdmin, async (req, res) => {
+  try {
+    const {
+      title,
+      description,
+      audience = "INDIVIDUAL",
+      priceType = "BUNDLE",
+      priceUSD = null,
+      startingAtUSD = null,
+      sessionsPerPack = null,
+      durationMin = null,
+      isPopular = false,
+      active = true,
+      sortOrder = 0,
+      image = null,
+      features = "",
+    } = req.body;
+
+    if (!title) return res.status(400).json({ error: "title is required" });
+    if (!["INDIVIDUAL", "CORPORATE"].includes(audience))
+      return res
+        .status(400)
+        .json({ error: "audience must be INDIVIDUAL or CORPORATE" });
+    if (!["PER_SESSION", "BUNDLE", "CUSTOM"].includes(priceType))
+      return res.status(400).json({ error: "priceType invalid" });
+
+    const created = await prisma.package.create({
+      data: {
+        title,
+        description: description || null,
+        audience,
+        priceType,
+        priceUSD: priceUSD !== null ? Number(priceUSD) : null,
+        startingAtUSD: startingAtUSD !== null ? Number(startingAtUSD) : null,
+        sessionsPerPack:
+          sessionsPerPack !== null ? Number(sessionsPerPack) : null,
+        durationMin: durationMin !== null ? Number(durationMin) : null,
+        isPopular: !!isPopular,
+        active: !!active,
+        sortOrder: Number(sortOrder || 0),
+        image: image || null,
+        features: features || "",
+      },
+    });
+    res.status(201).json(created);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to create package" });
+  }
+});
+
+// PATCH /api/admin/packages/:id
+app.patch("/api/admin/packages/:id", requireAdmin, async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const data = {};
+    const fields = [
+      "title",
+      "description",
+      "audience",
+      "priceType",
+      "image",
+      "features",
+      "isPopular",
+      "active",
+      "sortOrder",
+      "sessionsPerPack",
+      "durationMin",
+      "priceUSD",
+      "startingAtUSD",
+    ];
+    for (const k of fields) {
+      if (req.body[k] !== undefined) data[k] = req.body[k];
+    }
+
+    // normalize types
+    if (data.priceUSD !== undefined)
+      data.priceUSD = data.priceUSD === null ? null : Number(data.priceUSD);
+    if (data.startingAtUSD !== undefined)
+      data.startingAtUSD =
+        data.startingAtUSD === null ? null : Number(data.startingAtUSD);
+    if (data.sessionsPerPack !== undefined)
+      data.sessionsPerPack =
+        data.sessionsPerPack === null ? null : Number(data.sessionsPerPack);
+    if (data.durationMin !== undefined)
+      data.durationMin =
+        data.durationMin === null ? null : Number(data.durationMin);
+    if (data.sortOrder !== undefined) data.sortOrder = Number(data.sortOrder);
+    if (data.isPopular !== undefined) data.isPopular = !!data.isPopular;
+    if (data.active !== undefined) data.active = !!data.active;
+
+    const updated = await prisma.package.update({ where: { id }, data });
+    res.json(updated);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to update package" });
+  }
+});
+
+// DELETE /api/admin/packages/:id
+app.delete("/api/admin/packages/:id", requireAdmin, async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    await prisma.package.delete({ where: { id } });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to delete package" });
   }
 });
 

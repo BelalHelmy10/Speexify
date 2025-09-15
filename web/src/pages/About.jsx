@@ -11,8 +11,8 @@ const valuesIconA = "/logos/icon_empathy.svg";
 const valuesIconB = "/logos/icon_empower.svg";
 const valuesIconC = "/logos/icon_ownership.svg";
 const valuesIconD = "/logos/icon_inclusive.svg";
-const leadJan = "/images/Billy.jpeg";
-const leadEliane = "/images/leader_eliane.jpg";
+const leadBilly = "/images/Billy.jpeg";
+const leadZiad = "/images/ZiadAnwer.jpeg";
 const leadChris = "/images/leader_chris.jpg";
 
 const stats = [
@@ -65,8 +65,8 @@ const timeline = [
 ];
 
 const leaders = [
-  { img: leadJan, name: "Belal Helmy", role: "CEO" },
-  { img: leadEliane, name: "Eliane Yumi Iwasaki", role: "Sales & Marketing" },
+  { img: leadBilly, name: "Belal Helmy", role: "Co-Founder & CEO" },
+  { img: leadZiad, name: "Eliane Yumi Iwasaki", role: "Co-Founder & CEO" },
   { img: leadChris, name: "Christopher Osborn", role: "Engineering" },
 ];
 

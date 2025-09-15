@@ -233,8 +233,12 @@
     box-shadow: 0 1.5rem 3rem rgba($color-black, 0.08);
     img {
       width: 100%;
-      object-fit: contain; /* show the full image */
-      height: auto;
+      aspect-ratio: 4 / 5; /* force a portrait frame */
+      object-fit: cover; /* zoom/crop to fill */
+      object-position: 50% 30%; /* lift face slightly if needed */
+      display: block;
+      background: #ececec; /* fallback neutral background */
+      border-radius: 12px; /* optional, unify corners */
     }
   }
   &__leader-card {
