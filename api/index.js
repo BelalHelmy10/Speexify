@@ -1258,11 +1258,46 @@ app.get("/api/teacher/sessions", requireAuth, async (req, res) => {
 /*  GET /api/teacher/summary                                                  */
 /*  Returns the next upcoming session this teacher will teach, plus counts.   */
 /* ========================================================================== */
-app.get("/api/teacher/summary", requireAuth, async (req, res) => {
-  const now = new Date();
+// GET /api/me/summary
+app.get("/api/me/summary", async (req, res) => {
   try {
-    const nextTeach = await prisma.session.findFirst({
-      where: { teacherId: req.viewUserId, startAt: { gt: now } },
+    const u = req.session?.user;
+    if (!u?.id) return res.status(401).json({ error: "Unauthorized" });
+
+    const userId = u.id;
+    const now = new Date();
+
+    // counts (exclude canceled)
+    const upcomingCount = await prisma.session.count({
+      where: {
+        userId,
+        status: { not: "canceled" },
+        startAt: { gte: now },
+      },
+    });
+
+    const completedCount = await prisma.session.count({
+      where: {
+        userId,
+        status: "completed",
+      },
+    });
+
+    // next session should be future OR currently live, and not canceled
+    const nextSession = await prisma.session.findFirst({
+      where: {
+        userId,
+        status: { not: "canceled" },
+        OR: [
+          { startAt: { gte: now } }, // future
+          {
+            AND: [
+              { startAt: { lte: now } }, // started
+              { OR: [{ endAt: { gte: now } }, { endAt: null }] }, // still live
+            ],
+          },
+        ],
+      },
       orderBy: { startAt: "asc" },
       select: {
         id: true,
@@ -1270,28 +1305,25 @@ app.get("/api/teacher/summary", requireAuth, async (req, res) => {
         startAt: true,
         endAt: true,
         meetingUrl: true,
-        user: { select: { id: true, name: true, email: true } }, // learner
+        status: true,
       },
     });
 
-    const upcomingTeachCount = await prisma.session.count({
-      where: { teacherId: req.viewUserId, startAt: { gt: now } },
+    // include timezone if you store it on user
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { timezone: true },
     });
 
-    const taughtCount = await prisma.session.count({
-      where: {
-        teacherId: req.viewUserId,
-        OR: [
-          { endAt: { lt: now } },
-          { AND: [{ endAt: null }, { startAt: { lt: now } }] },
-        ],
-      },
+    res.json({
+      nextSession,
+      upcomingCount,
+      completedCount,
+      timezone: user?.timezone || null,
     });
-
-    res.json({ nextTeach, upcomingTeachCount, taughtCount });
   } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: "Failed to load teacher summary" });
+    console.error("GET /api/me/summary failed:", e);
+    res.status(500).json({ error: "Failed to load summary" });
   }
 });
 
@@ -1611,6 +1643,214 @@ app.get("/api/me/summary", requireAuth, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to load summary" });
+  }
+});
+
+// ============================================================================
+// Sessions (Learner)
+// ============================================================================
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Sessions (learner): GET /api/me/sessions
+// ?range=upcoming|past&limit=10
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/me/sessions?range=upcoming|past&limit=10
+app.get("/api/me/sessions", async (req, res) => {
+  try {
+    const u = req.session?.user;
+    if (!u?.id) return res.status(401).json({ error: "Unauthorized" });
+
+    const userId = u.id;
+    const role = u.role || "learner";
+    const { range = "upcoming", limit = 10 } = req.query;
+    const now = new Date();
+
+    // Include sessions the user attends (userId) and, if teacher, sessions they teach (teacherId)
+    const whereBase =
+      role === "teacher"
+        ? { OR: [{ userId }, { teacherId: userId }] }
+        : { userId };
+
+    // Don’t hide pre-migration NULL statuses; just exclude explicit canceled
+    const notCanceled = { NOT: { status: "canceled" } };
+
+    // Upcoming should include:
+    //   - future sessions (startAt >= now), and
+    //   - in-progress sessions (startAt <= now && endAt >= now OR endAt is NULL but started within last 2h)
+    // Past should include:
+    //   - strictly ended sessions (endAt < now), OR
+    //   - sessions that started < now and have no endAt but started >2h ago (considered done)
+    const twoHoursAgo = new Date(now.getTime() - 2 * 60 * 60 * 1000);
+
+    const where =
+      range === "past"
+        ? {
+            AND: [
+              whereBase,
+              {
+                OR: [
+                  { endAt: { lt: now } },
+                  { AND: [{ endAt: null }, { startAt: { lt: twoHoursAgo } }] },
+                ],
+              },
+            ],
+          }
+        : {
+            AND: [
+              whereBase,
+              notCanceled,
+              {
+                OR: [
+                  { startAt: { gte: now } }, // future
+                  {
+                    AND: [
+                      { startAt: { lte: now } }, // started already
+                      { OR: [{ endAt: { gte: now } }, { endAt: null }] }, // still ongoing (or no end yet)
+                    ],
+                  },
+                ],
+              },
+            ],
+          };
+
+    const orderBy = range === "past" ? { startAt: "desc" } : { startAt: "asc" };
+
+    const sessions = await prisma.session.findMany({
+      where,
+      orderBy,
+      take: Number(limit) || 10,
+      select: {
+        id: true,
+        title: true,
+        startAt: true,
+        endAt: true,
+        meetingUrl: true,
+        status: true, // OK if you ran migrations; if not, comment out
+        feedbackScore: true, // "
+      },
+    });
+
+    res.json(sessions);
+  } catch (e) {
+    console.error("GET /api/me/sessions failed:", e);
+    res.status(500).json({ error: "Failed to load sessions" });
+  }
+});
+
+// GET /api/me/sessions-between?start=ISO&end=ISO
+// Returns sessions overlapping the visible calendar range, excluding canceled.
+app.get("/api/me/sessions-between", async (req, res) => {
+  try {
+    const u = req.session?.user;
+    if (!u?.id) return res.status(401).json({ error: "Unauthorized" });
+
+    const userId = u.id;
+    const role = u.role || "learner";
+    const { start, end } = req.query;
+    const includeCanceled = String(req.query.includeCanceled) === "true";
+
+    // visible window (calendar range)
+    const startAt = start ? new Date(start) : new Date("1970-01-01");
+    const endAt = end ? new Date(end) : new Date("2999-12-31");
+
+    // learner sees their sessions; teacher also sees ones they teach
+    const whereBase =
+      role === "teacher"
+        ? { OR: [{ userId }, { teacherId: userId }] }
+        : { userId };
+
+    const sessions = await prisma.session.findMany({
+      where: {
+        AND: [
+          whereBase,
+          includeCanceled ? {} : { status: { not: "canceled" } }, // <-- changed
+          { startAt: { lte: endAt } },
+          { OR: [{ endAt: { gte: startAt } }, { endAt: null }] },
+        ],
+      },
+      orderBy: { startAt: "asc" },
+      select: {
+        id: true,
+        title: true,
+        startAt: true,
+        endAt: true,
+        meetingUrl: true,
+        status: true,
+      },
+    });
+
+    res.json(sessions);
+  } catch (e) {
+    console.error("GET /api/me/sessions-between failed:", e);
+    res.status(500).json({ error: "Failed to load calendar sessions" });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Sessions: POST /api/sessions/:id/cancel
+// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// Sessions: POST /api/sessions/:id/cancel
+// Learner can cancel their own, teacher can cancel theirs, admin can cancel any
+// ─────────────────────────────────────────────────────────────────────────────
+app.post("/api/sessions/:id/cancel", async (req, res) => {
+  try {
+    const u = req.session?.user;
+    if (!u?.id) return res.status(401).json({ error: "Unauthorized" });
+
+    const id = Number(req.params.id);
+
+    // Fetch the session first
+    const session = await prisma.session.findUnique({ where: { id } });
+    if (!session) return res.status(404).json({ error: "Session not found" });
+
+    // Authorization:
+    const isOwner = session.userId === u.id;
+    const isTeacher = session.teacherId === u.id;
+    const isAdmin = u.role === "admin";
+
+    if (!(isOwner || isTeacher || isAdmin)) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
+    const updated = await prisma.session.update({
+      where: { id },
+      data: { status: "canceled" },
+    });
+
+    res.json({ ok: true, session: updated });
+  } catch (e) {
+    console.error("Cancel failed:", e);
+    res.status(400).json({ error: "Failed to cancel session" });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Sessions: POST /api/sessions/:id/reschedule  { startAt, endAt }
+// ─────────────────────────────────────────────────────────────────────────────
+app.post("/api/sessions/:id/reschedule", async (req, res) => {
+  try {
+    if (!req.session?.user?.id)
+      return res.status(401).json({ error: "Unauthorized" });
+
+    const id = Number(req.params.id);
+    const { startAt, endAt } = req.body;
+
+    if (!startAt) return res.status(400).json({ error: "startAt is required" });
+
+    const updated = await prisma.session.update({
+      where: { id },
+      data: {
+        startAt: new Date(startAt),
+        endAt: endAt ? new Date(endAt) : null,
+        status: "scheduled",
+      },
+    });
+
+    res.json({ ok: true, session: updated });
+  } catch (e) {
+    console.error(e);
+    res.status(400).json({ error: "Failed to reschedule session" });
   }
 });
 

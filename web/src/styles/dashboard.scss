@@ -1,0 +1,207 @@
+// web/src/styles/Dashboard.scss
+@import "variables";
+@import "mixins";
+
+// Root namespace to avoid collisions
+.dashboard {
+  h2 {
+    margin: 8px 0 20px;
+  }
+}
+
+/* Panels & headers */
+.panel {
+  padding: 16px;
+  border: 1px solid $color-border;
+  border-radius: $radius;
+  background: white;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
+
+  & + .panel {
+    margin-top: 16px;
+  }
+
+  &__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+
+    h3 {
+      margin: 0;
+    }
+  }
+}
+
+.muted-gap {
+  margin: 4px 0;
+}
+.muted-text {
+  margin: 4px 0;
+  color: $muted;
+}
+
+/* KPI cards at the top */
+.card--kpi {
+  @include card;
+  display: grid;
+  gap: 6px;
+  min-height: 84px;
+  align-content: center;
+
+  .card__title {
+    font-size: 14px;
+    color: #667085;
+  }
+
+  .card__value {
+    font-size: clamp(22px, 2.6vw, 28px);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+}
+
+/* Session list */
+.session-list {
+  display: grid;
+  gap: 8px;
+}
+
+.session-item {
+  border: 1px solid $color-border;
+  border-radius: $radius;
+  padding: 12px;
+  background: #fff;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  align-items: center;
+
+  &__title {
+    font-weight: 600;
+  }
+
+  &__meta {
+    margin-top: 4px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    color: $muted;
+    font-size: 14px;
+  }
+
+  &__actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    justify-content: flex-end;
+  }
+}
+
+/* Badges */
+.badge {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  background: #f8fafc;
+  color: #475569;
+
+  &--scheduled {
+    background: #ecfeff;
+    color: #0369a1;
+    border-color: #a5f3fc;
+  }
+  &--completed {
+    background: #ecfdf5;
+    color: #047857;
+    border-color: #a7f3d0;
+  }
+  &--canceled {
+    background: #fef2f2;
+    color: #b91c1c;
+    border-color: #fecaca;
+  }
+  &--muted {
+    background: #f1f5f9;
+    color: #475569;
+  }
+}
+
+/* Buttons – extends your existing _buttons.scss */
+.btn--danger {
+  border-color: #ef4444;
+
+  &:hover {
+    background: #ef4444;
+    color: #fff;
+  }
+}
+
+/* Simple modal */
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+
+  &__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(2, 6, 23, 0.42);
+    backdrop-filter: blur(2px);
+  }
+  &__dialog {
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    width: min(560px, 92vw);
+    background: #fff;
+    border-radius: 14px;
+    border: 1px solid $color-border;
+    box-shadow: 0 30px 60px rgba(15, 23, 42, 0.24);
+  }
+  &__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-bottom: 1px solid $color-border;
+    h4 {
+      margin: 0;
+    }
+  }
+  &__body {
+    padding: 16px;
+  }
+  &__close {
+    font-size: 18px;
+    line-height: 1;
+  }
+}
+
+/* Small form grid inside modal */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+
+  label {
+    display: grid;
+    gap: 6px;
+    span {
+      font-size: 14px;
+      color: $muted;
+    }
+    input {
+      border: 1px solid $color-border;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 14px;
+    }
+  }
+
+  @media (max-width: 720px) {
+    grid-template-columns: 1fr;
+  }
+}

@@ -8,7 +8,6 @@ axios.defaults.withCredentials = true;
 function Contact() {
   const { user } = useAuth();
 
-  // ── form state
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -24,7 +23,6 @@ function Contact() {
   const [status, setStatus] = useState("");
   const [sending, setSending] = useState(false);
 
-  // Prefill from logged-in user
   useEffect(() => {
     if (!user) return;
     setForm((f) => ({
@@ -49,12 +47,10 @@ function Contact() {
 
     setSending(true);
     try {
-      // Try API first
       await axios.post("http://localhost:5050/api/contact", form);
-      setStatus("Sent ✓ Thanks — we’ll get back to you shortly.");
+      setStatus("Sent ✓ Thanks — we'll get back to you shortly.");
       setForm((f) => ({ ...f, message: "" }));
     } catch (err) {
-      // Fallback: open email client with prefilled content
       const subject = encodeURIComponent(
         `[Contact] ${form.topic} — ${form.name}`
       );
@@ -63,7 +59,7 @@ function Contact() {
       );
       window.location.href = `mailto:hello@speexify.com?subject=${subject}&body=${body}`;
       setStatus(
-        "Opened your email client. If that didn’t work, email hello@speexify.com."
+        "Opened your email client. If that didn't work, email hello@speexify.com."
       );
     } finally {
       setSending(false);
@@ -74,15 +70,45 @@ function Contact() {
     <div className="contact">
       {/* HERO */}
       <section className="contact-hero">
+        <div className="contact-hero__background">
+          <div className="contact-hero__gradient"></div>
+          <div className="contact-hero__pattern"></div>
+        </div>
+
         <div className="contact-hero__content container">
-          <h1 className="contact-hero__title">Talk to Speexify</h1>
+          <div className="contact-hero__badge">
+            <span className="contact-hero__badge-icon">💬</span>
+            <span>Get in touch</span>
+          </div>
+
+          <h1 className="contact-hero__title">
+            Talk to
+            <span className="contact-hero__title-accent"> Speexify</span>
+          </h1>
+
           <p className="contact-hero__subtitle">
             Language & communication coaching that drives results. Tell us what
-            you need — we’ll tailor a plan.
+            you need — we'll tailor a plan.
           </p>
+
           <div className="contact-hero__actions">
-            <a href="/register" className="btn btn--primary">
-              Book a call
+            <a href="/register" className="btn btn--primary btn--shine">
+              <span>Book a call</span>
+              <svg
+                className="btn__arrow"
+                width="16"
+                height="16"
+                viewBox="0 0 16 16"
+                fill="none"
+              >
+                <path
+                  d="M6 3L11 8L6 13"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
             </a>
             <a href="mailto:hello@speexify.com" className="btn btn--ghost">
               Email us
@@ -162,10 +188,10 @@ function Contact() {
               </div>
             </div>
 
-            <div className="form-row">
+            <div className="form-row form-row--3">
               <div className="field">
                 <label className="label" htmlFor="role">
-                  I’m a…
+                  I'm a…
                 </label>
                 <select
                   id="role"
@@ -250,7 +276,7 @@ function Contact() {
 
             <div className="actions">
               <button
-                className="btn btn--primary"
+                className="btn btn--primary btn--shine"
                 type="submit"
                 disabled={sending}
               >
@@ -268,8 +294,20 @@ function Contact() {
         {/* RIGHT: Sidebar cards */}
         <aside className="contact-sidebar">
           {/* Contact channels */}
-          <div className="card">
+          <div className="card contact-card">
             <div className="card__header">
+              <div className="card__icon">
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+              </div>
               <h3 className="card__title">Talk to a human</h3>
             </div>
             <ul className="list">
@@ -292,12 +330,40 @@ function Contact() {
                 </a>
               </li>
             </ul>
-            <div className="pill">Avg. response: &lt; 24h (Mon–Fri)</div>
+            <div className="pill">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path
+                  d="M8 14A6 6 0 108 2a6 6 0 000 12z"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                />
+                <path
+                  d="M8 6v4m0 2h.01"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+              </svg>
+              <span>Avg. response: &lt; 24h (Mon–Fri)</span>
+            </div>
           </div>
 
-          {/* Office / Hours (placeholder) */}
-          <div className="card">
+          {/* Office / Hours */}
+          <div className="card contact-card">
             <div className="card__header">
+              <div className="card__icon">
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
+                  <circle cx="12" cy="10" r="3" />
+                </svg>
+              </div>
               <h3 className="card__title">Office & hours</h3>
             </div>
             <div className="kvs">
@@ -316,14 +382,26 @@ function Contact() {
             </div>
           </div>
 
-          {/* Social (placeholder) */}
-          <div className="card">
+          {/* Social */}
+          <div className="card contact-card">
             <div className="card__header">
+              <div className="card__icon">
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path d="M17 2l4 4-4 4M3 11V9a4 4 0 014-4h14M7 22l-4-4 4-4M21 13v2a4 4 0 01-4 4H3" />
+                </svg>
+              </div>
               <h3 className="card__title">Follow us</h3>
             </div>
             <div className="social">
               <a
-                className="btn btn--ghost"
+                className="btn btn--ghost btn--social"
                 href="https://www.linkedin.com"
                 target="_blank"
                 rel="noreferrer"
@@ -331,7 +409,7 @@ function Contact() {
                 LinkedIn
               </a>
               <a
-                className="btn btn--ghost"
+                className="btn btn--ghost btn--social"
                 href="https://x.com"
                 target="_blank"
                 rel="noreferrer"
@@ -339,7 +417,7 @@ function Contact() {
                 X
               </a>
               <a
-                className="btn btn--ghost"
+                className="btn btn--ghost btn--social"
                 href="https://youtube.com"
                 target="_blank"
                 rel="noreferrer"
@@ -351,9 +429,10 @@ function Contact() {
         </aside>
       </section>
 
-      {/* Solutions lanes (placeholders) */}
+      {/* Solutions lanes */}
       <section className="container lanes">
         <div className="lane">
+          <div className="lane__icon">👤</div>
           <h3>For individuals</h3>
           <p>
             Improve speaking, listening, and confidence with tailored sessions.
@@ -363,6 +442,7 @@ function Contact() {
           </a>
         </div>
         <div className="lane">
+          <div className="lane__icon">👥</div>
           <h3>For teams</h3>
           <p>
             Onboarding, meetings, and presentations — programs that fit your
@@ -373,6 +453,7 @@ function Contact() {
           </a>
         </div>
         <div className="lane">
+          <div className="lane__icon">💎</div>
           <h3>Packages</h3>
           <p>Transparent pricing for individuals and companies.</p>
           <a className="btn btn--ghost" href="/packages">
@@ -381,7 +462,7 @@ function Contact() {
         </div>
       </section>
 
-      {/* Locations / map placeholder */}
+      {/* Locations / map */}
       <section className="contact-map">
         <div className="container contact-map__inner">
           <div className="contact-map__panel card">
@@ -391,19 +472,73 @@ function Contact() {
               request.
             </p>
             <ul className="bullets">
-              <li>🇬🇧 London (HQ)</li>
-              <li>🇪🇺 EU time zones covered</li>
-              <li>🇺🇸 East & Pacific time</li>
+              <li>
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 20 20"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path d="M7 10L9 12L13 8M19 10C19 14.9706 14.9706 19 10 19C5.02944 19 1 14.9706 1 10C1 5.02944 5.02944 1 10 1C14.9706 1 19 5.02944 19 10Z" />
+                </svg>
+                <span>🇬🇧 London (HQ)</span>
+              </li>
+              <li>
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 20 20"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path d="M7 10L9 12L13 8M19 10C19 14.9706 14.9706 19 10 19C5.02944 19 1 14.9706 1 10C1 5.02944 5.02944 1 10 1C14.9706 1 19 5.02944 19 10Z" />
+                </svg>
+                <span>🇪🇺 EU time zones covered</span>
+              </li>
+              <li>
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 20 20"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path d="M7 10L9 12L13 8M19 10C19 14.9706 14.9706 19 10 19C5.02944 19 1 14.9706 1 10C1 5.02944 5.02944 1 10 1C14.9706 1 19 5.02944 19 10Z" />
+                </svg>
+                <span>🇺🇸 East & Pacific time</span>
+              </li>
             </ul>
           </div>
           <div className="contact-map__canvas">
-            {/* Replace with an actual map embed later */}
-            <div className="map-placeholder">Map placeholder</div>
+            <div className="map-placeholder">
+              <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                <path
+                  d="M32 58C46.9117 58 59 45.9117 59 31C59 16.0883 46.9117 4 32 4C17.0883 4 5 16.0883 5 31C5 45.9117 17.0883 58 32 58Z"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                />
+                <path
+                  d="M32 4C32 4 40 18 40 31C40 44 32 58 32 58M32 4C32 4 24 18 24 31C24 44 32 58 32 58"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                />
+                <path
+                  d="M7 31H57M10 18H54M10 44H54"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                />
+              </svg>
+              <span>Interactive map</span>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* FAQ (simple accordion, placeholder) */}
+      {/* FAQ */}
       <section className="container faq">
         <h2 className="faq__title">Frequently asked questions</h2>
         <Accordion
@@ -427,29 +562,25 @@ function Contact() {
   );
 }
 
-/* ────────────────────────────────────────────────────────────────────────────
- * Small accordion component (no external lib)
- * ──────────────────────────────────────────────────────────────────────────── */
 function Accordion({ items = [] }) {
   const [open, setOpen] = useState(0);
   return (
     <div className="accordion">
       {items.map((it, idx) => (
-        <div
-          key={idx}
-          className={`accordion__item ${open === idx ? "is-open" : ""}`}
-        >
-          <button
+        <details key={idx} className="accordion__item" open={open === idx}>
+          <summary
             className="accordion__q"
-            onClick={() => setOpen(open === idx ? -1 : idx)}
-            aria-expanded={open === idx}
+            onClick={(e) => {
+              e.preventDefault();
+              setOpen(open === idx ? -1 : idx);
+            }}
           >
             {it.q}
-          </button>
+          </summary>
           <div className="accordion__a">
             <p>{it.a}</p>
           </div>
-        </div>
+        </details>
       ))}
     </div>
   );

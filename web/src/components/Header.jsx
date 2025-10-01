@@ -1,38 +1,50 @@
 // web/src/components/Header.jsx
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Imports: routing, auth hook, HTTP client, and local state for the mobile menu
+// Purpose:
+// - Ultra-premium header with magnetic hover effects and fluid animations
+// - Dynamic blur and depth that responds to scroll
+// - World-class micro-interactions throughout
 // ─────────────────────────────────────────────────────────────────────────────
-import { useState } from "react";
-import { NavLink, Link, useNavigate } from "react-router-dom";
+
+import { useState, useEffect } from "react";
+import { NavLink, Link, useNavigate, useLocation } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
 import axios from "axios";
 axios.defaults.withCredentials = true;
 
 export default function Header() {
-  // ───────────────────────────────────────────────────────────────────────────
-  // Auth context: current user, loading flag, and setter to clear on logout
-  // ───────────────────────────────────────────────────────────────────────────
   const { user, checking, setUser } = useAuth();
-
-  // ───────────────────────────────────────────────────────────────────────────
-  // Router helper: navigate after logout
-  // ───────────────────────────────────────────────────────────────────────────
   const navigate = useNavigate();
-
-  // ───────────────────────────────────────────────────────────────────────────
-  // UI state: controls the hamburger / mobile drawer
-  // ───────────────────────────────────────────────────────────────────────────
+  const location = useLocation();
   const [open, setOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
 
   // ───────────────────────────────────────────────────────────────────────────
-  // Logout action: end session on server, clear local auth, then redirect
+  // Scroll detection: enhances glassmorphism and shadow depth on scroll
   // ───────────────────────────────────────────────────────────────────────────
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // Close mobile menu on route change for seamless navigation
+  // ───────────────────────────────────────────────────────────────────────────
+  useEffect(() => {
+    setOpen(false);
+  }, [location.pathname]);
+
+  const logoTo = checking ? "/" : user ? "/dashboard" : "/";
+
   const logout = async () => {
     try {
       await axios.post("http://localhost:5050/api/auth/logout");
     } catch {
-      // ignore network errors; proceed to clear local state
+      // ignore network errors
     } finally {
       setUser(null);
       setOpen(false);
@@ -40,11 +52,6 @@ export default function Header() {
     }
   };
 
-  // ───────────────────────────────────────────────────────────────────────────
-  // Navigation models: public (logged out) and authenticated variants
-  // - "learner" is the base for all signed-in users
-  // - "adminExtra" adds Admin pages (now includes Admin · Packages)
-  // ───────────────────────────────────────────────────────────────────────────
   const loggedOut = [
     { to: "/", label: "Home" },
     { to: "/individual-training", label: "Individual" },
@@ -60,17 +67,8 @@ export default function Header() {
     { to: "/settings", label: "Settings" },
   ];
 
-  // ⬇️ ADDED: link to the new admin packages manager
-  const adminExtra = [
-    { to: "/admin", label: "Admin" },
-    { to: "/admin/packages", label: "Admin · Packages" },
-  ];
+  const adminExtra = [{ to: "/admin", label: "Admin" }];
 
-  // ───────────────────────────────────────────────────────────────────────────
-  // Final link list:
-  // - While checking auth: show public links (prevents flicker)
-  // - If admin: insert Admin links between Calendar and Settings
-  // ───────────────────────────────────────────────────────────────────────────
   const links =
     checking || !user
       ? loggedOut
@@ -78,146 +76,267 @@ export default function Header() {
       ? [...learner.slice(0, 2), ...adminExtra, ...learner.slice(2)]
       : learner;
 
-  // ───────────────────────────────────────────────────────────────────────────
-  // Right-side CTA:
-  // - "Checking…" while verifying auth
-  // - "Log in" when logged out
-  // - "Logout" button when logged in
-  // ───────────────────────────────────────────────────────────────────────────
   const RightCTA = () =>
     checking ? (
-      <span className="nav-status">Checking…</span>
+      <span className="nav-status">
+        <span className="status-pulse"></span>
+        <span className="status-text">Checking…</span>
+      </span>
     ) : !user ? (
-      <Link to="/login" className="nav-cta">
-        Log in
+      <Link to="/login" className="nav-cta" onClick={() => setOpen(false)}>
+        <span className="cta-bg"></span>
+        <span className="cta-content">
+          <span className="cta-text">Log in</span>
+          <svg
+            className="cta-arrow"
+            width="16"
+            height="16"
+            viewBox="0 0 16 16"
+            fill="none"
+          >
+            <path
+              d="M6 12L10 8L6 4"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </span>
       </Link>
     ) : (
-      <button type="button" className="nav-cta" onClick={logout}>
-        Logout
+      <button type="button" className="nav-cta logout-btn" onClick={logout}>
+        <span className="cta-bg"></span>
+        <span className="cta-content">
+          <span className="cta-text">Logout</span>
+          <svg
+            className="cta-icon"
+            width="16"
+            height="16"
+            viewBox="0 0 16 16"
+            fill="none"
+          >
+            <path
+              d="M6 14H3.33333C2.59695 14 2 13.403 2 12.6667V3.33333C2 2.59695 2.59695 2 3.33333 2H6"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+            />
+            <path
+              d="M10.6667 11.3333L14 8M14 8L10.6667 4.66667M14 8H6"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </span>
       </button>
     );
 
   return (
-    // ─────────────────────────────────────────────────────────────────────────
-    // Header wrapper: contains brand, desktop nav, right CTA, and hamburger
-    // ─────────────────────────────────────────────────────────────────────────
-    <header className="site-header-wrapper">
+    <header className={`site-header-wrapper${scrolled ? " is-scrolled" : ""}`}>
+      <div className="header-glow"></div>
       <div className="site-header container">
-        {/* ────────────────────────────────────────────────────────────────────
-            Brand / Logo: link back to home
-        ───────────────────────────────────────────────────────────────────── */}
-        <Link to="/" className="brand" aria-label="Speexify">
-          <span>Speexify</span>
+        <Link
+          to={logoTo}
+          className="brand"
+          aria-label="Speexify"
+          onClick={() => setOpen(false)}
+        >
+          <span className="brand-text">Speexify</span>
+          <div className="brand-orb"></div>
         </Link>
 
-        {/* ────────────────────────────────────────────────────────────────────
-            Desktop navigation: primary links + Register (only when logged out)
-        ───────────────────────────────────────────────────────────────────── */}
         <nav className="nav">
           <ul className="nav-list">
-            {links.map((item) => (
-              <li key={item.to} className="nav-item">
+            {links.map((item, idx) => (
+              <li
+                key={item.to}
+                className="nav-item"
+                style={{ "--item-index": idx }}
+              >
                 <NavLink
                   to={item.to}
                   className={({ isActive }) =>
                     "nav-link" + (isActive ? " is-active" : "")
                   }
-                  onClick={() => setOpen(false)}
                 >
-                  {item.label}
+                  <span className="link-bg"></span>
+                  <span className="link-text">{item.label}</span>
                 </NavLink>
               </li>
             ))}
             {!checking && !user && (
-              <li className="nav-item">
+              <li
+                className="nav-item nav-item-special"
+                style={{ "--item-index": links.length }}
+              >
                 <NavLink
                   to="/register"
                   className={({ isActive }) =>
                     "nav-link" + (isActive ? " is-active" : "")
                   }
-                  onClick={() => setOpen(false)}
                 >
-                  Register
+                  <span className="link-bg"></span>
+                  <span className="link-text">Register</span>
                 </NavLink>
               </li>
             )}
           </ul>
         </nav>
 
-        {/* ────────────────────────────────────────────────────────────────────
-            Right-side CTA: login/logout/checking state indicator
-        ───────────────────────────────────────────────────────────────────── */}
         <RightCTA />
 
-        {/* ────────────────────────────────────────────────────────────────────
-            Hamburger toggle: opens/closes the mobile drawer
-        ───────────────────────────────────────────────────────────────────── */}
         <button
           className={"nav-toggle" + (open ? " is-open" : "")}
           aria-label="Toggle menu"
           aria-expanded={open ? "true" : "false"}
           onClick={() => setOpen((v) => !v)}
         >
-          <span />
-          <span />
-          <span />
+          <span className="toggle-box">
+            <span className="toggle-inner">
+              <span className="toggle-line"></span>
+              <span className="toggle-line"></span>
+              <span className="toggle-line"></span>
+            </span>
+          </span>
         </button>
       </div>
 
-      {/* ──────────────────────────────────────────────────────────────────────
-          Mobile drawer: mirrors desktop nav; adds CTA row for login/logout
-      ─────────────────────────────────────────────────────────────────────── */}
       <div className={"mobile-drawer" + (open ? " is-open" : "")}>
-        <ul className="mobile-list">
-          {links.map((item) => (
-            <li key={item.to} className="mobile-item">
-              <NavLink
-                to={item.to}
-                className={({ isActive }) =>
-                  "mobile-link" + (isActive ? " is-active" : "")
-                }
-                onClick={() => setOpen(false)}
+        <div className="mobile-drawer-inner">
+          <ul className="mobile-list">
+            {links.map((item, idx) => (
+              <li
+                key={item.to}
+                className="mobile-item"
+                style={{ "--item-index": idx }}
               >
-                {item.label}
-              </NavLink>
-            </li>
-          ))}
-
-          {/* Extra actions for logged-out users (only after checking) */}
-          {!checking && !user && (
-            <>
-              <li className="mobile-item">
                 <NavLink
-                  to="/register"
+                  to={item.to}
                   className={({ isActive }) =>
                     "mobile-link" + (isActive ? " is-active" : "")
                   }
-                  onClick={() => setOpen(false)}
                 >
-                  Register
+                  <span className="mobile-link-bg"></span>
+                  <span className="mobile-link-content">
+                    <span className="mobile-link-text">{item.label}</span>
+                    <svg
+                      className="mobile-link-arrow"
+                      width="18"
+                      height="18"
+                      viewBox="0 0 18 18"
+                      fill="none"
+                    >
+                      <path
+                        d="M6.75 13.5L11.25 9L6.75 4.5"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </span>
                 </NavLink>
               </li>
-              <li className="mobile-item">
-                <Link
-                  to="/login"
-                  className="mobile-cta"
-                  onClick={() => setOpen(false)}
-                >
-                  Log in
-                </Link>
-              </li>
-            </>
-          )}
+            ))}
 
-          {/* Logout action for authenticated users */}
-          {!checking && user && (
-            <li className="mobile-item">
-              <button className="mobile-cta" onClick={logout} type="button">
-                Logout
-              </button>
-            </li>
-          )}
-        </ul>
+            {!checking && !user && (
+              <>
+                <li
+                  className="mobile-item"
+                  style={{ "--item-index": links.length }}
+                >
+                  <NavLink
+                    to="/register"
+                    className={({ isActive }) =>
+                      "mobile-link" + (isActive ? " is-active" : "")
+                    }
+                  >
+                    <span className="mobile-link-bg"></span>
+                    <span className="mobile-link-content">
+                      <span className="mobile-link-text">Register</span>
+                      <svg
+                        className="mobile-link-arrow"
+                        width="18"
+                        height="18"
+                        viewBox="0 0 18 18"
+                        fill="none"
+                      >
+                        <path
+                          d="M6.75 13.5L11.25 9L6.75 4.5"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </span>
+                  </NavLink>
+                </li>
+                <li
+                  className="mobile-item mobile-item-cta"
+                  style={{ "--item-index": links.length + 1 }}
+                >
+                  <Link to="/login" className="mobile-cta">
+                    <span className="mobile-cta-bg"></span>
+                    <span className="mobile-cta-content">
+                      <span>Log in</span>
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 18 18"
+                        fill="none"
+                      >
+                        <path
+                          d="M6.75 13.5L11.25 9L6.75 4.5"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </span>
+                  </Link>
+                </li>
+              </>
+            )}
+
+            {!checking && user && (
+              <li
+                className="mobile-item mobile-item-cta"
+                style={{ "--item-index": links.length }}
+              >
+                <button
+                  className="mobile-cta logout-btn"
+                  onClick={logout}
+                  type="button"
+                >
+                  <span className="mobile-cta-bg"></span>
+                  <span className="mobile-cta-content">
+                    <span>Logout</span>
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                      <path
+                        d="M6 14H3.33333C2.59695 14 2 13.403 2 12.6667V3.33333C2 2.59695 2.59695 2 3.33333 2H6"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                      />
+                      <path
+                        d="M10.6667 11.3333L14 8M14 8L10.6667 4.66667M14 8H6"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </span>
+                </button>
+              </li>
+            )}
+          </ul>
+        </div>
       </div>
     </header>
   );

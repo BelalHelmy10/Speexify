@@ -1,15 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import "../styles/careers.scss";
 
-/**
- * Careers page for Speexify
- * - Loads jobs from /data/jobs.json (put this file in /public/data)
- * - Search by title/keywords
- * - Filter by department, location, and type
- * - Save roles (localStorage)
- * - Modal job details
- * - "Apply" via applyUrl (fallback to mailto)
- */
 export default function Careers() {
   const [jobs, setJobs] = useState([]);
   const [departments, setDepartments] = useState([]);
@@ -31,7 +22,6 @@ export default function Careers() {
     }
   });
 
-  // Load jobs JSON from /public
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -52,7 +42,6 @@ export default function Careers() {
     };
   }, []);
 
-  // Persist saved roles
   useEffect(() => {
     localStorage.setItem(
       "speexify_saved_jobs",
@@ -70,7 +59,6 @@ export default function Careers() {
     return ["All", ...Array.from(set)];
   }, [jobs]);
 
-  // Filtered / searched list
   const filtered = useMemo(() => {
     const qNorm = q.trim().toLowerCase();
     return jobs.filter((j) => {
@@ -131,21 +119,53 @@ Thanks!`
     <main className="careers">
       {/* Hero */}
       <section className="careers__hero">
+        <div className="careers__hero-background">
+          <div className="careers__hero-gradient"></div>
+          <div className="careers__hero-pattern"></div>
+        </div>
+
         <div className="careers__hero-inner">
           <div className="careers__hero-copy">
-            <span className="careers__eyebrow">Careers at Speexify</span>
-            <h1>Help people speak with confidence, everywhere</h1>
-            <p>
-              We’re a remote-first team building language & communication
+            <div className="careers__badge">
+              <span className="careers__badge-icon">🚀</span>
+              <span>Careers at Speexify</span>
+            </div>
+
+            <h1 className="careers__headline">
+              Help people speak with
+              <span className="careers__headline-accent">
+                {" "}
+                confidence, everywhere
+              </span>
+            </h1>
+
+            <p className="careers__subtitle">
+              We're a remote-first team building language & communication
               training that actually works—for learners and for the businesses
               that rely on them. Join us to ship impact, not just features.
             </p>
+
             <div className="careers-cta-row">
               <a
                 href="#open-roles"
                 className="careers-btn careers-btn--primary careers-btn--lg"
               >
-                See open roles <span className="careers-btn__icon">→</span>
+                <span>See open roles</span>
+                <svg
+                  className="careers-btn__arrow"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                >
+                  <path
+                    d="M6 3L11 8L6 13"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
               </a>
               <a
                 href="/about"
@@ -155,30 +175,40 @@ Thanks!`
               </a>
             </div>
           </div>
-          <div className="careers__hero-art" aria-hidden="true" />
+
+          <div className="careers__hero-art">
+            <div className="careers__hero-art-glow"></div>
+            <div className="careers__hero-art-shape careers__hero-art-shape--1"></div>
+            <div className="careers__hero-art-shape careers__hero-art-shape--2"></div>
+            <div className="careers__hero-art-shape careers__hero-art-shape--3"></div>
+          </div>
         </div>
       </section>
 
-      {/* Perks / values quick band */}
+      {/* Values */}
       <section className="careers__values">
         <div className="careers__values-grid">
           <div className="careers__value">
+            <div className="careers__value-icon">🌍</div>
             <h3>Remote-first</h3>
             <p>Work from anywhere. Async-friendly culture across time zones.</p>
           </div>
           <div className="careers__value">
+            <div className="careers__value-icon">📚</div>
             <h3>Learning stipend</h3>
             <p>
               Each teammate gets a budget for courses, books, and conferences.
             </p>
           </div>
           <div className="careers__value">
+            <div className="careers__value-icon">🏖️</div>
             <h3>Wellbeing & PTO</h3>
             <p>
               Flexible time off, local holidays, and generous parental leave.
             </p>
           </div>
           <div className="careers__value">
+            <div className="careers__value-icon">🤝</div>
             <h3>Inclusive culture</h3>
             <p>We embrace diverse perspectives to create better solutions.</p>
           </div>
@@ -199,8 +229,19 @@ Thanks!`
             </p>
           </div>
 
-          {/* Saved roles */}
           <div className="careers__saved">
+            <svg
+              className="careers__saved-icon"
+              width="20"
+              height="20"
+              viewBox="0 0 20 20"
+              fill="none"
+            >
+              <path
+                d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"
+                fill="currentColor"
+              />
+            </svg>
             <span>Saved:</span>
             <span className="careers__saved-count">{saved.size}</span>
           </div>
@@ -208,14 +249,31 @@ Thanks!`
 
         {/* Controls */}
         <div className="careers__controls">
-          <input
-            type="search"
-            placeholder="Search by title, keyword, tech…"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            className="careers__search"
-            aria-label="Search jobs"
-          />
+          <div className="careers__search-wrap">
+            <svg
+              className="careers__search-icon"
+              width="20"
+              height="20"
+              viewBox="0 0 20 20"
+              fill="none"
+            >
+              <path
+                d="M17 17l-4-4m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
+            </svg>
+            <input
+              type="search"
+              placeholder="Search by title, keyword, tech…"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              className="careers__search"
+              aria-label="Search jobs"
+            />
+          </div>
+
           <div className="careers__filters">
             <select
               value={filters.department}
@@ -223,10 +281,11 @@ Thanks!`
                 setFilters((f) => ({ ...f, department: e.target.value }))
               }
               aria-label="Filter by department"
+              className="careers__filter"
             >
               {departments.map((d) => (
                 <option key={d} value={d}>
-                  {d}
+                  {d === "All" ? "All departments" : d}
                 </option>
               ))}
             </select>
@@ -236,10 +295,11 @@ Thanks!`
                 setFilters((f) => ({ ...f, location: e.target.value }))
               }
               aria-label="Filter by location"
+              className="careers__filter"
             >
               {locations.map((l) => (
                 <option key={l} value={l}>
-                  {l}
+                  {l === "All" ? "All locations" : l}
                 </option>
               ))}
             </select>
@@ -249,10 +309,11 @@ Thanks!`
                 setFilters((f) => ({ ...f, type: e.target.value }))
               }
               aria-label="Filter by type"
+              className="careers__filter"
             >
               {types.map((t) => (
                 <option key={t} value={t}>
-                  {t}
+                  {t === "All" ? "All types" : t}
                 </option>
               ))}
             </select>
@@ -263,6 +324,25 @@ Thanks!`
         <div className="careers__list" role="list">
           {!loading && filtered.length === 0 && (
             <div className="careers__empty">
+              <svg
+                className="careers__empty-icon"
+                width="48"
+                height="48"
+                viewBox="0 0 48 48"
+                fill="none"
+              >
+                <path
+                  d="M24 44c11.046 0 20-8.954 20-20S35.046 4 24 4 4 12.954 4 24s8.954 20 20 20z"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                />
+                <path
+                  d="M17 17l14 14m0-14L17 31"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+              </svg>
               <p>
                 No matches. Try clearing filters or searching for fewer words.
               </p>
@@ -273,13 +353,33 @@ Thanks!`
             const isSaved = saved.has(job.id);
             return (
               <article key={job.id} className="careers-card" role="listitem">
-                <div className="careers-card__meta">
-                  <span className="careers-pill">{job.department}</span>
-                  <span className="careers-dot">•</span>
-                  <span>{job.location}</span>
-                  <span className="careers-dot">•</span>
-                  <span>{job.type}</span>
+                <div className="careers-card__header">
+                  <div className="careers-card__meta">
+                    <span className="careers-pill">{job.department}</span>
+                    <span className="careers-dot">•</span>
+                    <span>{job.location}</span>
+                    <span className="careers-dot">•</span>
+                    <span>{job.type}</span>
+                  </div>
+                  <button
+                    className={"careers-save" + (isSaved ? " is-saved" : "")}
+                    aria-pressed={isSaved}
+                    onClick={() => toggleSave(job.id)}
+                    title={isSaved ? "Remove from saved" : "Save this role"}
+                  >
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 20 20"
+                      fill={isSaved ? "currentColor" : "none"}
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <path d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" />
+                    </svg>
+                  </button>
                 </div>
+
                 <h3 className="careers-card__title">{job.title}</h3>
                 {job.summary && (
                   <p className="careers-card__summary">{job.summary}</p>
@@ -296,15 +396,22 @@ Thanks!`
                     className="careers-btn careers-btn--primary careers-btn--md"
                     onClick={() => apply(job)}
                   >
-                    Apply <span className="careers-btn__icon">↗</span>
-                  </button>
-                  <button
-                    className={"careers-save" + (isSaved ? " is-saved" : "")}
-                    aria-pressed={isSaved}
-                    onClick={() => toggleSave(job.id)}
-                    title={isSaved ? "Remove from saved" : "Save this role"}
-                  >
-                    {isSaved ? "★ Saved" : "☆ Save"}
+                    <span>Apply</span>
+                    <svg
+                      className="careers-btn__arrow"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 16 16"
+                      fill="none"
+                    >
+                      <path
+                        d="M6 3L11 8L6 13"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
                   </button>
                 </div>
               </article>
@@ -315,9 +422,17 @@ Thanks!`
 
       {/* Connect band */}
       <section className="careers__connect">
+        <div className="careers__connect-background">
+          <div className="careers__connect-gradient"></div>
+          <div className="careers__connect-shapes">
+            <div className="careers__connect-shape careers__connect-shape--1"></div>
+            <div className="careers__connect-shape careers__connect-shape--2"></div>
+          </div>
+        </div>
+
         <div className="careers__connect-inner">
-          <div>
-            <h2>Don’t see the right role?</h2>
+          <div className="careers__connect-content">
+            <h2>Don't see the right role?</h2>
             <p>
               We love meeting curious, kind builders. Tell us how you can help
               our mission.
@@ -325,7 +440,7 @@ Thanks!`
           </div>
           <a
             href="mailto:careers@speexify.com"
-            className="careers-btn careers-btn--outline careers-btn--lg"
+            className="careers-btn careers-btn--ghost careers-btn--lg"
           >
             Connect with us
           </a>
@@ -360,6 +475,23 @@ function JobModal({ job, onClose, onApply }) {
     >
       <div className="careers-modal__backdrop" onClick={onClose} />
       <div className="careers-modal__panel" role="document">
+        <button
+          className="careers-modal__close"
+          onClick={onClose}
+          aria-label="Close"
+        >
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <path d="M6 6l12 12m0-12L6 18" />
+          </svg>
+        </button>
+
         <header className="careers-modal__header">
           <div className="careers-modal__kicker">
             <span className="careers-pill">{job.department}</span>
@@ -376,7 +508,7 @@ function JobModal({ job, onClose, onApply }) {
         <div className="careers-modal__content">
           {job.description && (
             <>
-              <h4>What you’ll do</h4>
+              <h4>What you'll do</h4>
               <ul>
                 {job.description.map((d, i) => (
                   <li key={i}>{d}</li>
@@ -387,7 +519,7 @@ function JobModal({ job, onClose, onApply }) {
 
           {job.requirements && (
             <>
-              <h4>What you’ll bring</h4>
+              <h4>What you'll bring</h4>
               <ul>
                 {job.requirements.map((d, i) => (
                   <li key={i}>{d}</li>
@@ -419,7 +551,22 @@ function JobModal({ job, onClose, onApply }) {
             className="careers-btn careers-btn--primary careers-btn--md"
             onClick={() => onApply(job)}
           >
-            Apply <span className="careers-btn__icon">↗</span>
+            <span>Apply</span>
+            <svg
+              className="careers-btn__arrow"
+              width="16"
+              height="16"
+              viewBox="0 0 16 16"
+              fill="none"
+            >
+              <path
+                d="M6 3L11 8L6 13"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
           </button>
         </footer>
       </div>

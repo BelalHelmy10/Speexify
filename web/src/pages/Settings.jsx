@@ -66,77 +66,95 @@ export default function Settings() {
     }
   };
 
-  if (!me) return <p>{status || "Loading..."}</p>;
+  if (!me) return <p className="spx-status">{status || "Loading..."}</p>;
 
   return (
-    <div style={{ maxWidth: 520 }}>
-      <h2>Settings</h2>
-      {status && <p>{status}</p>}
+    <div className="spx-settings">
+      <div className="spx-container">
+        <h2 className="spx-title">Settings</h2>
+        {status && <p className="spx-status">{status}</p>}
 
-      {/* Profile + timezone form */}
-      <form onSubmit={onSave} style={{ display: "grid", gap: 12 }}>
-        <div>
-          <label style={{ display: "block", fontSize: 12, color: "#666" }}>
-            Name
-          </label>
-          <input
-            value={me.name || ""}
-            onChange={(e) => setMe((m) => ({ ...m, name: e.target.value }))}
-            placeholder="Your name"
-          />
-        </div>
+        {/* Profile + timezone form */}
+        <form onSubmit={onSave} className="spx-card spx-form">
+          <div className="spx-form__row">
+            <label className="spx-label">
+              Name
+              <input
+                className="spx-input"
+                value={me.name || ""}
+                onChange={(e) => setMe((m) => ({ ...m, name: e.target.value }))}
+                placeholder="Your name"
+                type="text"
+              />
+            </label>
+          </div>
 
-        <div>
-          <label style={{ display: "block", fontSize: 12, color: "#666" }}>
-            Time zone
-          </label>
-          <select
-            value={me.timezone || ""}
-            onChange={(e) => setMe((m) => ({ ...m, timezone: e.target.value }))}
-          >
-            <option value="">(Use browser default)</option>
-            {timezones.map((tz) => (
-              <option key={tz} value={tz}>
-                {tz}
-              </option>
-            ))}
-          </select>
-        </div>
+          <div className="spx-form__row">
+            <label className="spx-label">
+              Time zone
+              <select
+                className="spx-select"
+                value={me.timezone || ""}
+                onChange={(e) =>
+                  setMe((m) => ({ ...m, timezone: e.target.value }))
+                }
+              >
+                <option value="">(Use browser default)</option>
+                {timezones.map((tz) => (
+                  <option key={tz} value={tz}>
+                    {tz}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
 
-        <div>
-          <button type="submit">Save</button>
-        </div>
-      </form>
-
-      {/* Change password */}
-      <section
-        style={{ marginTop: 32, paddingTop: 16, borderTop: "1px solid #eee" }}
-      >
-        <h3>Change password</h3>
-        <form onSubmit={changePassword} style={{ display: "grid", gap: 12 }}>
-          <label>
-            Current password
-            <input
-              type="password"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              required
-            />
-          </label>
-          <label>
-            New password (min 8 chars)
-            <input
-              type="password"
-              value={newPassword}
-              minLength={8}
-              onChange={(e) => setNewPassword(e.target.value)}
-              required
-            />
-          </label>
-          <button type="submit">Update password</button>
-          {pwStatus && <p>{pwStatus}</p>}
+          <div className="spx-actions">
+            <button type="submit" className="spx-btn spx-btn--primary">
+              Save
+            </button>
+          </div>
         </form>
-      </section>
+
+        {/* Change password */}
+        <section className="spx-card spx-divider">
+          <div className="spx-card__header">
+            <h3>Change password</h3>
+          </div>
+
+          <form onSubmit={changePassword} className="spx-form">
+            <label className="spx-label">
+              Current password
+              <input
+                className="spx-input"
+                type="password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                required
+              />
+            </label>
+
+            <label className="spx-label">
+              New password (min 8 chars)
+              <input
+                className="spx-input"
+                type="password"
+                value={newPassword}
+                minLength={8}
+                onChange={(e) => setNewPassword(e.target.value)}
+                required
+              />
+            </label>
+
+            <div className="spx-actions">
+              <button type="submit" className="spx-btn spx-btn--primary">
+                Update password
+              </button>
+              {pwStatus && <p className="spx-status">{pwStatus}</p>}
+            </div>
+          </form>
+        </section>
+      </div>
     </div>
   );
 }

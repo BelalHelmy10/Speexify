@@ -1,0 +1,227 @@
+/* Two-pane card look */
+.calendar-two-pane {
+  .calendar-two-pane__wrap {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 24px;
+    align-items: start;
+    margin: 0 0.5rem; /* 0 for top/bottom, 20px for left/right */
+  }
+  .calendar-two-pane__left,
+  .calendar-two-pane__right {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(2, 6, 23, 0.06);
+    border: 1px solid rgba(2, 6, 23, 0.08);
+  }
+  .calendar-two-pane__left {
+    padding: 16px;
+    position: sticky;
+    top: 24px;
+  }
+  .calendar-two-pane__right {
+    padding: 12px;
+  }
+  @media (max-width: 980px) {
+    .calendar-two-pane__wrap {
+      grid-template-columns: 1fr;
+    }
+    .calendar-two-pane__left {
+      position: relative;
+      top: auto;
+    }
+  }
+}
+
+/* Mini calendar polish */
+.mini-cal {
+  .react-calendar {
+    border: none !important;
+    background: transparent;
+  }
+  .react-calendar__navigation button {
+    font-weight: 600;
+    background: #f3f6fb;
+    border: 1px solid rgba(2, 6, 23, 0.08);
+    border-radius: 10px;
+    padding: 8px 10px;
+  }
+  .react-calendar__navigation button:hover {
+    background: #e8eef8;
+  }
+  .react-calendar__tile {
+    border-radius: 10px;
+    padding: 8px 0;
+  }
+  .react-calendar__tile--now {
+    background: rgba(14, 165, 233, 0.07);
+    outline: 1px dashed rgba(2, 6, 23, 0.12);
+  }
+  .react-calendar__tile--active {
+    background: #0072f5;
+    color: #fff;
+  }
+}
+.mini-legend {
+  margin-top: 12px;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  font-size: 13px;
+  color: #5b667a;
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    margin-right: 6px;
+    display: inline-block;
+  }
+  .dot--blue {
+    background: #0ea5e9;
+  }
+  .dot--red {
+    background: #ef4444;
+  }
+}
+
+/* RBC toolbar only (avoid styling day-number buttons) */
+.rbc-toolbar {
+  display: flex;
+  gap: 12px;
+  padding: 8px;
+  margin-bottom: 12px;
+  justify-content: space-between;
+  align-items: center;
+}
+.rbc-toolbar .rbc-btn-group > button {
+  background: #f3f6fb;
+  border: 1px solid rgba(2, 6, 23, 0.08);
+  border-radius: 10px;
+  padding: 6px 10px;
+  font-weight: 600;
+  color: #0f172a;
+}
+.rbc-toolbar .rbc-btn-group > button:hover {
+  background: #e8eef8;
+}
+.rbc-toolbar .rbc-btn-group > button.rbc-active,
+.rbc-toolbar .rbc-btn-group > button:active {
+  background: #dfe7f6;
+  border-color: rgba(2, 6, 23, 0.12);
+}
+
+/* Reset month day-number buttons */
+.rbc-month-view .rbc-date-cell > button {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  border-radius: 0;
+}
+
+/* Views container */
+.rbc-month-view,
+.rbc-time-view,
+.rbc-agenda-view {
+  border: 1px solid rgba(2, 6, 23, 0.12);
+  border-radius: 16px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+/* Week/Day grid sizing so Week view always shows */
+.rbc-time-view .rbc-time-content {
+  height: 640px;
+  min-height: 480px;
+  overflow-y: auto;
+}
+.rbc-time-gutter,
+.rbc-time-content > * + * > * {
+  border-color: rgba(2, 6, 23, 0.12);
+}
+
+/* Borders + highlights */
+.rbc-header,
+.rbc-day-bg,
+.rbc-time-slot,
+.rbc-timeslot-group {
+  border-color: rgba(2, 6, 23, 0.12);
+}
+.rbc-header {
+  padding: 6px;
+  font-weight: 600;
+  border-bottom: 1px solid rgba(2, 6, 23, 0.12);
+}
+.rbc-today {
+  background: rgba(14, 165, 233, 0.07);
+}
+.rbc-off-range-bg {
+  background: rgba(2, 6, 23, 0.03);
+}
+
+/* ── Clean, centered Week/Day column headers ───────────────────────────── */
+.rbc-time-header .rbc-header {
+  padding: 0; /* remove uneven default padding */
+  height: 44px; /* consistent header height */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid rgba(2, 6, 23, 0.12);
+}
+.rbc-time-header .rbc-header > span,
+.rbc-time-header .rbc-header > div {
+  font-weight: 700;
+  font-size: 13px;
+  color: #0f172a;
+  line-height: 1;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+}
+/* subtle highlight for today’s column header */
+.rbc-time-header .rbc-today .rbc-header {
+  background: rgba(14, 165, 233, 0.07);
+}
+
+/* Event pills */
+.rbc-event {
+  border-radius: 10px;
+  padding: 2px 6px;
+  color: #fff;
+  font-weight: 600;
+}
+.rbc-event.ev--scheduled {
+  background: #0ea5e9;
+}
+.rbc-event.ev--canceled {
+  background: #ef4444;
+  text-decoration: line-through;
+  opacity: 0.95;
+}
+.ev-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+}
+.ev-pill .ev-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.9);
+  opacity: 0.9;
+}
+
+/* Agenda polish */
+.rbc-agenda-date-cell,
+.rbc-agenda-time-cell {
+  font-weight: 600;
+}
+.rbc-button-link {
+  font-weight: 800;
+  font-size: 1rem;
+}
+.react-calendar {
+  border: none !important;
+}

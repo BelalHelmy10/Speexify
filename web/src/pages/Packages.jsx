@@ -158,7 +158,7 @@ function Packages() {
           {/* hero image */}
           <figure className="spx-pkg-media spx-pkg-hero__media">
             <img
-              src="/assets/packages-v2/hero.jpg"
+              src="/images/english-coaching-in-action.jpg"
               alt="English coaching in action"
               loading="eager"
             />
@@ -519,7 +519,7 @@ const defaultCorporatePlans = [
     featuresRaw:
       "1:1 + small group mix\nKickoff & goal-setting\nEnd-of-pilot report\nManager updates",
     isPopular: false,
-    image: "/assets/packages-v2/corp-pilot.jpg",
+    image: "/images/pilot.jpg",
   },
   {
     title: "Team (10–50)",
@@ -529,7 +529,7 @@ const defaultCorporatePlans = [
     featuresRaw:
       "1:1 + group + workshops\nCoach matching\nMonthly reporting\nInvoicing & POs",
     isPopular: true,
-    image: "/assets/packages-v2/corp-team.jpg",
+    image: "/images/team.jpg",
   },
   {
     title: "Company (50+)",
@@ -539,7 +539,7 @@ const defaultCorporatePlans = [
     featuresRaw:
       "Scaled scheduling\nDedicated CSM\nQuarterly exec reports\nSecurity review support",
     isPopular: false,
-    image: "/assets/packages-v2/corp-company.jpg",
+    image: "/images/company.jpg",
   },
 ];
 

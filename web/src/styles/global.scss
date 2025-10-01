@@ -11,6 +11,7 @@
 @import "./auth";
 @import "./footer";
 @import "./admin.scss";
+@import "./dashboard.scss";
 
 // body {
 //   margin: 0;
@@ -55,4 +56,9 @@ a {
 }
 .btn-link:hover {
   text-decoration: underline;
+}
+
+.nsm7Bb-HzV7m-LgbsSe-BPrWId {
+  font-size: 1rem;
+  font-weight: 700 !important;
 }

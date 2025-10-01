@@ -1,8 +1,5 @@
 // web/src/pages/Login.jsx
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Imports: React hooks, axios for API calls, and react-router for navigation
-// ─────────────────────────────────────────────────────────────────────────────
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
@@ -10,23 +7,13 @@ import GoogleButton from "../components/GoogleButton";
 axios.defaults.withCredentials = true;
 
 function Login() {
-  // ───────────────────────────────────────────────────────────────────────────
-  // Local state
-  // - form: holds email/password fields
-  // - user: current authenticated user (if any)
-  // - msg: error/success messages
-  // - submitting: loading state for login button
-  // ───────────────────────────────────────────────────────────────────────────
   const [form, setForm] = useState({ email: "", password: "" });
   const [user, setUser] = useState(null);
   const [msg, setMsg] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
-  // ───────────────────────────────────────────────────────────────────────────
-  // Fetch current user (if session exists)
-  // Calls /auth/me to check whether user is logged in via cookie session
-  // ───────────────────────────────────────────────────────────────────────────
   const checkMe = async () => {
     try {
       const res = await axios.get("http://localhost:5050/api/auth/me");
@@ -36,13 +23,6 @@ function Login() {
     }
   };
 
-  // ───────────────────────────────────────────────────────────────────────────
-  // Login handler
-  // - Prevents default form submit
-  // - Calls backend /auth/login
-  // - On success → refresh user, redirect to dashboard
-  // - On failure → show error message
-  // ───────────────────────────────────────────────────────────────────────────
   const login = async (e) => {
     e.preventDefault();
     setMsg("");
@@ -58,12 +38,6 @@ function Login() {
     }
   };
 
-  // ───────────────────────────────────────────────────────────────────────────
-  // Google login handlers
-  // - Calls backend /auth/google with the Google credential
-  // - On success → refresh user, redirect to dashboard
-  // - On failure → show error message
-  // ───────────────────────────────────────────────────────────────────────────
   const handleGoogleSuccess = async (data) => {
     try {
       setMsg("");
@@ -83,113 +57,250 @@ function Login() {
     setMsg("Google sign-in failed");
   };
 
-  // ───────────────────────────────────────────────────────────────────────────
-  // Logout handler
-  // - Clears session on server
-  // - Refreshes local user state
-  // ───────────────────────────────────────────────────────────────────────────
   const logout = async () => {
     await axios.post("http://localhost:5050/api/auth/logout");
     await checkMe();
   };
 
-  // ───────────────────────────────────────────────────────────────────────────
-  // Run once on mount
-  // - Checks if the user is already logged in (existing session)
-  // ───────────────────────────────────────────────────────────────────────────
   useEffect(() => {
     checkMe();
   }, []);
 
-  // ───────────────────────────────────────────────────────────────────────────
-  // Render
-  // - If not logged in: show styled login form
-  // - If logged in: show status + logout option
-  // ───────────────────────────────────────────────────────────────────────────
   return (
     <main className="auth-page">
-      <section className="auth-card">
-        {/* Header */}
-        <header className="auth-head">
-          <h1>Login</h1>
-          <p>Welcome back! Please enter your details to continue.</p>
-        </header>
-
-        {/* If user is not logged in → show login form */}
-        {!user ? (
-          <form className="auth-form" onSubmit={login}>
-            {/* Email field */}
-            <div className="field">
-              <label htmlFor="email">Email</label>
-              <input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-                required
-              />
+      <div className="auth-container">
+        <section className="auth-card">
+          {/* Brand mark */}
+          <div className="auth-brand">
+            <div className="brand-icon">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M12 2L2 7L12 12L22 7L12 2Z"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M2 17L12 22L22 17"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M2 12L12 17L22 12"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
             </div>
-
-            {/* Password field */}
-            <div className="field">
-              <label htmlFor="password">Password</label>
-              <input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={form.password}
-                onChange={(e) => setForm({ ...form, password: e.target.value })}
-                required
-              />
-            </div>
-
-            {/* Error message */}
-            {msg && <div className="auth-alert">{msg}</div>}
-
-            {/* Submit button */}
-            <button className="btn-primary" type="submit" disabled={submitting}>
-              {submitting ? "Signing in…" : "Login"}
-            </button>
-
-            {/* Divider + Google login */}
-            <div className="divider">
-              <span>or</span>
-            </div>
-            <GoogleButton
-              onSuccess={handleGoogleSuccess}
-              onError={handleGoogleError}
-            />
-
-            {/* forgot password */}
-            <p style={{ marginTop: 8 }}>
-              <a className="muted-link" href="/forgot-password">
-                Forgot your password?
-              </a>
-            </p>
-
-            {/* Helper footer */}
-            <footer className="auth-foot">
-              <span className="muted">Don’t have an account?</span>
-              <a href="/register" className="link-strong">
-                Create one
-              </a>
-            </footer>
-          </form>
-        ) : (
-          // If user is logged in → show welcome + logout
-          <div className="auth-logged">
-            <p>
-              Logged in as <strong>{user.email}</strong>{" "}
-              {user.name ? `(${user.name})` : ""} — role: {user.role}
-            </p>
-            <button className="btn-primary" onClick={logout}>
-              Logout
-            </button>
           </div>
-        )}
-      </section>
+
+          {/* Header */}
+          <header className="auth-header">
+            <h1>Welcome back</h1>
+            <p>Sign in to continue to your account</p>
+          </header>
+
+          {!user ? (
+            <>
+              {/* Google login first */}
+              <div className="auth-social">
+                <GoogleButton
+                  onSuccess={handleGoogleSuccess}
+                  onError={handleGoogleError}
+                />
+              </div>
+
+              {/* Divider */}
+              <div className="auth-divider">
+                <span>or continue with email</span>
+              </div>
+
+              {/* Login form */}
+              <form className="auth-form" onSubmit={login}>
+                {/* Error message */}
+                {msg && (
+                  <div className="auth-alert" role="alert">
+                    <svg viewBox="0 0 20 20" fill="currentColor">
+                      <path
+                        fillRule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    <span>{msg}</span>
+                  </div>
+                )}
+
+                {/* Email field */}
+                <div className="form-field">
+                  <label htmlFor="email">Email address</label>
+                  <div className="input-wrapper">
+                    <svg
+                      className="input-icon"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
+                      <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+                    </svg>
+                    <input
+                      id="email"
+                      type="email"
+                      placeholder="name@example.com"
+                      value={form.email}
+                      onChange={(e) =>
+                        setForm({ ...form, email: e.target.value })
+                      }
+                      required
+                      autoComplete="email"
+                    />
+                  </div>
+                </div>
+
+                {/* Password field */}
+                <div className="form-field">
+                  <div className="field-label-row">
+                    <label htmlFor="password">Password</label>
+                    <a href="/forgot-password" className="forgot-link">
+                      Forgot password?
+                    </a>
+                  </div>
+                  <div className="input-wrapper">
+                    <svg
+                      className="input-icon"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    <input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Enter your password"
+                      value={form.password}
+                      onChange={(e) =>
+                        setForm({ ...form, password: e.target.value })
+                      }
+                      required
+                      autoComplete="current-password"
+                    />
+                    <button
+                      type="button"
+                      className="password-toggle"
+                      onClick={() => setShowPassword(!showPassword)}
+                      aria-label={
+                        showPassword ? "Hide password" : "Show password"
+                      }
+                    >
+                      {showPassword ? (
+                        <svg viewBox="0 0 20 20" fill="currentColor">
+                          <path
+                            fillRule="evenodd"
+                            d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z"
+                            clipRule="evenodd"
+                          />
+                          <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z" />
+                        </svg>
+                      ) : (
+                        <svg viewBox="0 0 20 20" fill="currentColor">
+                          <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                          <path
+                            fillRule="evenodd"
+                            d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Submit button */}
+                <button
+                  className="btn-primary"
+                  type="submit"
+                  disabled={submitting}
+                >
+                  {submitting ? (
+                    <>
+                      <svg className="spinner" viewBox="0 0 24 24">
+                        <circle
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                          fill="none"
+                          opacity="0.25"
+                        />
+                        <path
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          opacity="0.75"
+                        />
+                      </svg>
+                      Signing in...
+                    </>
+                  ) : (
+                    "Sign in"
+                  )}
+                </button>
+              </form>
+
+              {/* Footer */}
+              <footer className="auth-footer">
+                <p>
+                  Don't have an account?{" "}
+                  <a href="/register" className="link-primary">
+                    Create account
+                  </a>
+                </p>
+              </footer>
+            </>
+          ) : (
+            // Logged in state
+            <div className="auth-logged">
+              <div className="user-badge">
+                <div className="user-avatar">
+                  {user.name
+                    ? user.name.charAt(0).toUpperCase()
+                    : user.email.charAt(0).toUpperCase()}
+                </div>
+                <div className="user-info">
+                  <p className="user-name">{user.name || "User"}</p>
+                  <p className="user-email">{user.email}</p>
+                  <span className="user-role">{user.role}</span>
+                </div>
+              </div>
+              <button className="btn-secondary" onClick={logout}>
+                Sign out
+              </button>
+            </div>
+          )}
+        </section>
+
+        {/* Side decoration */}
+        <div className="auth-decoration">
+          <div className="decoration-circle circle-1"></div>
+          <div className="decoration-circle circle-2"></div>
+          <div className="decoration-circle circle-3"></div>
+        </div>
+      </div>
     </main>
   );
 }
+
 export default Login;
