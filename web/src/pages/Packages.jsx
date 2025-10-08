@@ -77,7 +77,7 @@ function Packages() {
           durationMin: row.durationMin || null,
           startingAtUSD: row.startingAtUSD || null,
           sortOrder: row.sortOrder || 0,
-          image: row.image || "/assets/packages/placeholder.jpg",
+          image: row.image || "/assets/packages/placeholder.avif",
           cta: row.cta || null,
         });
 
@@ -158,7 +158,7 @@ function Packages() {
           {/* hero image */}
           <figure className="spx-pkg-media spx-pkg-hero__media">
             <img
-              src="/images/english-coaching-in-action.jpg"
+              src="/images/english-coaching-in-action.avif"
               alt="English coaching in action"
               loading="eager"
             />
@@ -482,7 +482,7 @@ const defaultIndividualPlans = [
     featuresRaw:
       "Coach-matched 1:1\nFlexible scheduling\nPractical homework\nEmail feedback",
     isPopular: false,
-    image: "/assets/packages-v2/individual-starter.jpg",
+    image: "/assets/packages-v2/individual-starter.avif",
   },
   {
     title: "Standard",
@@ -494,7 +494,7 @@ const defaultIndividualPlans = [
     featuresRaw:
       "Coach-matched 1:1\nWeekly plan\nPronunciation tune-ups\nProgress check-ins",
     isPopular: true,
-    image: "/assets/packages-v2/individual-standard.jpg",
+    image: "/assets/packages-v2/individual-standard.avif",
   },
   {
     title: "Intensive",
@@ -506,7 +506,7 @@ const defaultIndividualPlans = [
     featuresRaw:
       "2× weekly sessions\nPriority scheduling\nDetailed feedback\nMock interviews/presentations",
     isPopular: false,
-    image: "/assets/packages-v2/individual-intensive.jpg",
+    image: "/assets/packages-v2/individual-intensive.avif",
   },
 ];
 
@@ -519,7 +519,7 @@ const defaultCorporatePlans = [
     featuresRaw:
       "1:1 + small group mix\nKickoff & goal-setting\nEnd-of-pilot report\nManager updates",
     isPopular: false,
-    image: "/images/pilot.jpg",
+    image: "/images/pilot.avif",
   },
   {
     title: "Team (10–50)",
@@ -529,7 +529,7 @@ const defaultCorporatePlans = [
     featuresRaw:
       "1:1 + group + workshops\nCoach matching\nMonthly reporting\nInvoicing & POs",
     isPopular: true,
-    image: "/images/team.jpg",
+    image: "/images/team.avif",
   },
   {
     title: "Company (50+)",
@@ -539,7 +539,7 @@ const defaultCorporatePlans = [
     featuresRaw:
       "Scaled scheduling\nDedicated CSM\nQuarterly exec reports\nSecurity review support",
     isPopular: false,
-    image: "/images/company.jpg",
+    image: "/images/company.avif",
   },
 ];
 

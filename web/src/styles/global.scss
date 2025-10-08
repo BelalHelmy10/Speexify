@@ -62,3 +62,12 @@ a {
   font-size: 1rem;
   font-weight: 700 !important;
 }
+
+/* src/styles/_perf-off.scss */
+// *,
+// :before,
+// :after {
+//   animation: none !important;
+//   transition: none !important;
+//   scroll-behavior: auto !important;
+// }

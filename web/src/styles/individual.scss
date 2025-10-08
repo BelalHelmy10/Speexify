@@ -383,7 +383,6 @@ $space-10: 64px;
 
   &__badge-icon {
     font-size: 16px;
-    animation: float 3s ease-in-out infinite;
   }
 
   &__title {
@@ -473,7 +472,6 @@ $space-10: 64px;
     position: absolute;
     inset: -50%;
     background: radial-gradient(circle, rgba($brand, 0.3), transparent 70%);
-    animation: float 4s ease-in-out infinite;
     z-index: 0;
   }
 
@@ -531,7 +529,6 @@ $space-10: 64px;
   .metric__icon {
     font-size: 32px;
     margin-bottom: 12px;
-    animation: float 3s ease-in-out infinite;
   }
 
   .metric__value {

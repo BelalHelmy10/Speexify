@@ -180,7 +180,7 @@ function Corporate() {
           <figure className="spx-corp-media spx-corp-hero__media">
             <div className="spx-corp-hero__media-glow"></div>
             <img
-              src="/images/team-practicing-communication.jpg"
+              src="/images/team-practicing-communication.avif"
               alt="Team practicing communication"
               loading="eager"
             />
@@ -247,7 +247,7 @@ function Corporate() {
 
           <div className="spx-corp-grid--3">
             <Program
-              img="/images/one-on-one-coaching.jpg"
+              img="/images/one-on-one-coaching.avif"
               title="1:1 Coaching"
               points={[
                 "Personalized plan per learner",
@@ -256,7 +256,7 @@ function Corporate() {
               ]}
             />
             <Program
-              img="/images/small-group-practice.jpg"
+              img="/images/small-group-practice.avif"
               title="Small-Group Practice"
               points={[
                 "3–6 learners per group",
@@ -265,7 +265,7 @@ function Corporate() {
               ]}
             />
             <Program
-              img="/images/workshops.jpg"
+              img="/images/workshops.avif"
               title="Workshops"
               points={[
                 "Presentations & storytelling",
@@ -289,7 +289,7 @@ function Corporate() {
 
           <div className="spx-corp-grid--3">
             <Plan
-              img="/images/pilot.jpg"
+              img="/images/pilot.avif"
               title="Pilot (5–10)"
               desc="Validate impact with a small cohort and clear report."
               bullets={[
@@ -299,14 +299,14 @@ function Corporate() {
               ]}
             />
             <Plan
-              img="/images/team.jpg"
+              img="/images/team.avif"
               title="Team (10–50)"
               desc="Blend formats; add workshops; monthly reporting."
               bullets={["Coach matching", "Workshops", "Manager updates"]}
               popular
             />
             <Plan
-              img="/images/company.jpg"
+              img="/images/company.avif"
               title="Company (50+)"
               desc="Scaled rollout with CSM and quarterly exec reports."
               bullets={[
@@ -348,7 +348,7 @@ function Corporate() {
             </div>
             <figure className="spx-corp-media spx-corp-reporting__media">
               <img
-                src="/images/reporting-preview.jpg"
+                src="/images/reporting-preview.avif"
                 alt="Reporting preview"
                 loading="lazy"
               />
@@ -371,21 +371,21 @@ function Corporate() {
               quote="Our team now leads client calls with confidence. Practical and fast."
               by="Sarah K."
               role="Head of CS, SaaS"
-              avatar="/images/head-of-cs.jpg"
+              avatar="/images/head-of-cs.avif"
               rating={5}
             />
             <Testi
               quote="Workshops were a hit. The follow-up 1:1s sealed the gains."
               by="Marcus T."
               role="L&D Manager, Fintech"
-              avatar="/images/l&d-manager.jpg"
+              avatar="/images/l&d-manager.avif"
               rating={5}
             />
             <Testi
               quote="Clear reporting helped us expand from pilot to company-wide."
               by="Priya M."
               role="HRBP, Global Ops"
-              avatar="/images/global-ops.jpg"
+              avatar="/images/global-ops.avif"
               rating={5}
             />
           </div>

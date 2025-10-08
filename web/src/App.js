@@ -64,6 +64,7 @@ function App() {
           <Route element={<ProtectedRoute />}>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/calendar" element={<Calendar />} />
+
             <Route path="/settings" element={<Settings />} />
           </Route>
 

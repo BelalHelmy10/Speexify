@@ -263,12 +263,10 @@ $ring: #e5e7eb;
     font-weight: 600;
     color: $brand-ink;
     margin-bottom: 24px;
-    animation: fadeInUp 0.8s ease;
   }
 
   &__badge-icon {
     font-size: 16px;
-    animation: float 3s ease-in-out infinite;
   }
 
   &__title {
@@ -379,18 +377,15 @@ $ring: #e5e7eb;
   &__float {
     position: absolute;
     z-index: 2;
-    animation: float 3s ease-in-out infinite;
 
     &--1 {
       top: 20px;
       right: 20px;
-      animation-delay: 0s;
     }
 
     &--2 {
       bottom: 20px;
       left: 20px;
-      animation-delay: 1.5s;
     }
   }
 }
@@ -526,7 +521,6 @@ $ring: #e5e7eb;
     }
 
     .feature__icon {
-      transform: scale(1.1) rotate(5deg);
       background: linear-gradient(135deg, $brand, $brand-light);
     }
   }

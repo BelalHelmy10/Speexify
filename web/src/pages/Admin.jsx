@@ -1,4 +1,4 @@
-// web/src/pages/Admin.jsx (or wherever you place it)
+// web/src/pages/Admin.jsx
 import { useEffect, useState, useMemo } from "react";
 import axios from "axios";
 import "../styles/admin.scss";
@@ -7,16 +7,10 @@ axios.defaults.withCredentials = true;
 
 function Admin() {
   const [status, setStatus] = useState("");
-
-  // Data (for sessions)
-  const [users, setUsers] = useState([]); // learners for the Create form
+  const [users, setUsers] = useState([]);
   const [sessions, setSessions] = useState([]);
-
-  // Teachers for assignment & filtering
   const [teachers, setTeachers] = useState([]);
   const [teacherIdFilter, setTeacherIdFilter] = useState("");
-
-  // Filters (sessions list)
   const [q, setQ] = useState("");
   const [qDebounced, setQDebounced] = useState("");
   const [from, setFrom] = useState("");
@@ -24,7 +18,6 @@ function Admin() {
   const [loading, setLoading] = useState(false);
   const [total, setTotal] = useState(0);
 
-  // Create form (session)
   const [form, setForm] = useState({
     userId: "",
     teacherId: "",
@@ -37,7 +30,6 @@ function Admin() {
     notes: "",
   });
 
-  // Edit form (session)
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({
     userId: "",
@@ -51,14 +43,10 @@ function Admin() {
     notes: "",
   });
 
-  // ───────────────────────────────────────────────────────────────────────────
-  // NEW: Users Admin state (manage all users)
-  // ───────────────────────────────────────────────────────────────────────────
   const [usersAdmin, setUsersAdmin] = useState([]);
   const [usersQ, setUsersQ] = useState("");
   const [usersBusy, setUsersBusy] = useState(false);
 
-  // ---------- helpers ----------
   const toDateInput = (iso) => {
     if (!iso) return "";
     const d = new Date(iso);
@@ -87,9 +75,6 @@ function Admin() {
       minute: "2-digit",
     });
 
-  // ───────────────────────────────────────────────────────────────────────────
-  // NEW: duration helpers + auto-calc on start/end change
-  // ───────────────────────────────────────────────────────────────────────────
   const joinDateTime = (dateStr, timeStr) => {
     if (!dateStr || !timeStr) return null;
     const [y, m, d] = dateStr.split("-").map(Number);
@@ -100,11 +85,10 @@ function Admin() {
   const diffMinutes = (start, end) => {
     if (!start || !end) return 0;
     let ms = end - start;
-    if (ms < 0) ms += 24 * 60 * 60 * 1000; // crosses midnight → next day
+    if (ms < 0) ms += 24 * 60 * 60 * 1000;
     return Math.round(ms / 60000);
   };
 
-  // Auto-calc duration for CREATE when date/start/end all present
   useEffect(() => {
     if (form.date && form.startTime && form.endTime) {
       const start = joinDateTime(form.date, form.startTime);
@@ -116,7 +100,6 @@ function Admin() {
     }
   }, [form.date, form.startTime, form.endTime]);
 
-  // Auto-calc duration for EDIT when date/start/end all present
   useEffect(() => {
     if (editingId && editForm.date && editForm.startTime && editForm.endTime) {
       const start = joinDateTime(editForm.date, editForm.startTime);
@@ -128,7 +111,6 @@ function Admin() {
     }
   }, [editingId, editForm.date, editForm.startTime, editForm.endTime]);
 
-  // ---------- load learners for Create form ----------
   useEffect(() => {
     (async () => {
       try {
@@ -142,8 +124,6 @@ function Admin() {
     })();
   }, []);
 
-  // ---------- load teachers for Create form ----------
-  // Load teachers once (active only)
   useEffect(() => {
     (async () => {
       try {
@@ -157,13 +137,11 @@ function Admin() {
     })();
   }, []);
 
-  // ---------- debounce search (sessions list) ----------
   useEffect(() => {
     const t = setTimeout(() => setQDebounced(q), 300);
     return () => clearTimeout(t);
   }, [q]);
 
-  // ---------- sessions fetching with filters ----------
   const params = useMemo(() => {
     const p = new URLSearchParams();
     if (qDebounced.trim()) p.set("q", qDebounced.trim());
@@ -206,10 +184,8 @@ function Admin() {
 
   useEffect(() => {
     reloadSessions();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params]);
 
-  // ---------- create ----------
   const onCreateChange = (e) => {
     const { name, value } = e.target;
     setForm((f) => ({ ...f, [name]: value }));
@@ -248,12 +224,11 @@ function Admin() {
     }
   };
 
-  // ---------- edit ----------
   const startEdit = (row) => {
     setEditingId(row.id);
     setEditForm({
       userId: String(row.user?.id || ""),
-      teacherId: String(row.teacher?.id || ""), // ← NEW
+      teacherId: String(row.teacher?.id || ""),
       title: row.title || "",
       date: toDateInput(row.startAt),
       startTime: toTimeInput(row.startAt),
@@ -285,7 +260,7 @@ function Admin() {
         meetingUrl: editForm.meetingUrl || null,
         notes: editForm.notes || null,
         userId: editForm.userId ? Number(editForm.userId) : undefined,
-        teacherId: editForm.teacherId ? Number(editForm.teacherId) : 0, // 0 clears on backend
+        teacherId: editForm.teacherId ? Number(editForm.teacherId) : 0,
       };
       await axios.patch(`http://localhost:5050/api/sessions/${id}`, payload);
       setStatus("Updated ✓");
@@ -309,9 +284,6 @@ function Admin() {
     }
   };
 
-  // ───────────────────────────────────────────────────────────────────────────
-  // NEW: Users Admin — handlers (list/search/role/disable/reset/impersonate)
-  // ───────────────────────────────────────────────────────────────────────────
   async function loadUsersAdmin() {
     setUsersBusy(true);
     try {
@@ -323,9 +295,11 @@ function Admin() {
       setUsersBusy(false);
     }
   }
+
   useEffect(() => {
-    loadUsersAdmin(); /* on mount */
+    loadUsersAdmin();
   }, []);
+
   useEffect(() => {
     const t = setTimeout(loadUsersAdmin, 300);
     return () => clearTimeout(t);
@@ -370,8 +344,6 @@ function Admin() {
     try {
       await axios.post(`http://localhost:5050/api/admin/impersonate/${u.id}`);
       setStatus(`Viewing as ${u.email}`);
-      // Optional: navigate to user-facing dashboard
-      // window.location.href = "/dashboard";
     } catch (e) {
       setStatus(e.response?.data?.error || "Failed to impersonate");
     }
@@ -381,252 +353,400 @@ function Admin() {
     try {
       await axios.post(`http://localhost:5050/api/admin/impersonate/stop`);
       setStatus("Back to admin");
-      // window.location.reload();
     } catch (e) {
       setStatus(e.response?.data?.error || "Failed to stop impersonation");
     }
   }
 
   return (
-    <div className="admin">
-      <header className="admin__header">
-        <h1 className="admin__title">Admin</h1>
-        {status && <span className="admin__status">{status}</span>}
-      </header>
+    <div className="admin-modern">
+      <div className="admin-header">
+        <div className="admin-header__content">
+          <h1 className="admin-title">
+            Admin Dashboard
+            <span className="admin-subtitle">
+              Manage users, sessions, and monitor teacher workload
+            </span>
+          </h1>
+        </div>
+        {status && (
+          <div className="status-toast">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path
+                d="M10 18C14.4183 18 18 14.4183 18 10C18 5.58172 14.4183 2 10 2C5.58172 2 2 5.58172 2 10C2 14.4183 5.58172 18 10 18Z"
+                stroke="currentColor"
+                strokeWidth="2"
+              />
+              <path
+                d="M7 10L9 12L13 8"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            {status}
+          </div>
+        )}
+      </div>
 
-      {/* ───────────────────────────────────────────────────────────────────────
-          Users Admin (list/search; change role; disable/enable; reset; view-as)
-          ─────────────────────────────────────────────────────────────────── */}
-      <section className="card">
-        <div className="card__header card__header--row">
-          <h2 className="card__title">Users</h2>
-          <div className="filters">
-            <input
-              className="input input--search"
-              placeholder="Search by email or name…"
-              value={usersQ}
-              onChange={(e) => setUsersQ(e.target.value)}
-            />
-            <button className="btn" onClick={loadUsersAdmin}>
-              {usersBusy ? "…" : "Refresh"}
+      <section className="admin-card">
+        <div className="admin-card__header">
+          <div className="admin-card__title-group">
+            <div className="admin-card__icon admin-card__icon--primary">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M17 21V19C17 17.9391 16.5786 16.9217 15.8284 16.1716C15.0783 15.4214 14.0609 15 13 15H5C3.93913 15 2.92172 15.4214 2.17157 16.1716C1.42143 16.9217 1 17.9391 1 19V21M23 21V19C22.9993 18.1137 22.7044 17.2528 22.1614 16.5523C21.6184 15.8519 20.8581 15.3516 20 15.13M16 3.13C16.8604 3.3503 17.623 3.8507 18.1676 4.55231C18.7122 5.25392 19.0078 6.11683 19.0078 7.005C19.0078 7.89317 18.7122 8.75608 18.1676 9.45769C17.623 10.1593 16.8604 10.6597 16 10.88M13 7C13 9.20914 11.2091 11 9 11C6.79086 11 5 9.20914 5 7C5 4.79086 6.79086 3 9 3C11.2091 3 13 4.79086 13 7Z"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
+            <div>
+              <h2 className="admin-card__title">User Management</h2>
+              <p className="admin-card__subtitle">
+                {usersAdmin.length} total users
+              </p>
+            </div>
+          </div>
+          <div className="admin-card__actions">
+            <div className="search-box">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path
+                  d="M7 13C10.3137 13 13 10.3137 13 7C13 3.68629 10.3137 1 7 1C3.68629 1 1 3.68629 1 7C1 10.3137 3.68629 13 7 13Z"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
+                <path
+                  d="M11.5 11.5L15 15"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
+              </svg>
+              <input
+                type="text"
+                placeholder="Search users..."
+                value={usersQ}
+                onChange={(e) => setUsersQ(e.target.value)}
+              />
+            </div>
+            <button className="btn-icon-modern" onClick={loadUsersAdmin}>
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                <path
+                  d="M1 9H17M9 1V17"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+              </svg>
             </button>
-            <button className="btn" onClick={stopImpersonate}>
+            <button className="btn-secondary" onClick={stopImpersonate}>
               Return to admin
             </button>
           </div>
         </div>
 
-        <div className="table">
-          <div className="table__scroll">
-            <table>
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Email / Name</th>
-                  <th>Role</th>
-                  <th>Status</th>
-                  <th style={{ width: 320 }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {usersAdmin.map((u) => (
-                  <tr key={u.id}>
-                    <td>{u.id}</td>
-                    <td>
-                      <div style={{ display: "flex", flexDirection: "column" }}>
-                        <strong>{u.email}</strong>
-                        <span style={{ color: "var(--muted)" }}>
-                          {u.name || "—"}
-                        </span>
+        <div className="data-table">
+          <table>
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {usersAdmin.map((u) => (
+                <tr key={u.id}>
+                  <td>
+                    <div className="user-cell">
+                      <div className="user-avatar">
+                        {u.name?.charAt(0) || u.email.charAt(0)}
                       </div>
-                    </td>
-                    <td>
-                      <select
-                        className="select"
-                        value={u.role}
-                        onChange={(e) => changeRole(u, e.target.value)}
+                      <div className="user-info">
+                        <div className="user-name">{u.name || "—"}</div>
+                        <div className="user-email">{u.email}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <select
+                      className="role-select"
+                      value={u.role}
+                      onChange={(e) => changeRole(u, e.target.value)}
+                    >
+                      <option value="learner">Learner</option>
+                      <option value="teacher">Teacher</option>
+                      <option value="admin">Admin</option>
+                    </select>
+                  </td>
+                  <td>
+                    <span
+                      className={`status-badge ${
+                        u.isDisabled
+                          ? "status-badge--inactive"
+                          : "status-badge--active"
+                      }`}
+                    >
+                      <span className="status-badge__dot" />
+                      {u.isDisabled ? "Inactive" : "Active"}
+                    </span>
+                  </td>
+                  <td>
+                    <div className="action-buttons">
+                      <button
+                        className="btn-action"
+                        onClick={() => sendReset(u)}
+                        title="Reset Password"
                       >
-                        <option value="learner">learner</option>
-                        <option value="teacher">teacher</option>
-                        <option value="admin">admin</option>
-                      </select>
-                    </td>
-                    <td>{u.isDisabled ? "Disabled" : "Active"}</td>
-                    <td>
-                      <div className="btn-row">
-                        <button className="btn" onClick={() => sendReset(u)}>
-                          Reset password
-                        </button>
-                        <button className="btn" onClick={() => impersonate(u)}>
-                          View as
-                        </button>
-                        <button
-                          className={`btn ${u.isDisabled ? "" : "btn--danger"}`}
-                          onClick={() => toggleDisabled(u)}
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 16 16"
+                          fill="none"
                         >
-                          {u.isDisabled ? "Enable" : "Disable"}
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-                {usersAdmin.length === 0 && (
-                  <tr>
-                    <td colSpan={5} className="empty">
-                      No users
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                          <path
+                            d="M12 8C12 10.2091 10.2091 12 8 12C5.79086 12 4 10.2091 4 8C4 5.79086 5.79086 4 8 4"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                          />
+                          <path
+                            d="M8 1V4L10 2"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </button>
+                      <button
+                        className="btn-action"
+                        onClick={() => impersonate(u)}
+                        title="View As"
+                      >
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 16 16"
+                          fill="none"
+                        >
+                          <path
+                            d="M1 8C1 8 3.5 3 8 3C12.5 3 15 8 15 8C15 8 12.5 13 8 13C3.5 13 1 8 1 8Z"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                          />
+                          <circle
+                            cx="8"
+                            cy="8"
+                            r="2"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                          />
+                        </svg>
+                      </button>
+                      <button
+                        className={`btn-action ${
+                          !u.isDisabled ? "btn-action--danger" : ""
+                        }`}
+                        onClick={() => toggleDisabled(u)}
+                        title={u.isDisabled ? "Enable" : "Disable"}
+                      >
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 16 16"
+                          fill="none"
+                        >
+                          <path
+                            d="M2 2L14 14M14 8C14 11.3137 11.3137 14 8 14C4.68629 14 2 11.3137 2 8C2 4.68629 4.68629 2 8 2C11.3137 2 14 4.68629 14 8Z"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </section>
 
-      {/* Create session */}
-      <section className="card">
-        <div className="card__header">
-          <h2 className="card__title">Create session</h2>
+      <section className="admin-card">
+        <div className="admin-card__header">
+          <div className="admin-card__title-group">
+            <div className="admin-card__icon admin-card__icon--success">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M12 5V19M5 12H19"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </div>
+            <div>
+              <h2 className="admin-card__title">Create New Session</h2>
+              <p className="admin-card__subtitle">
+                Schedule a session for a learner
+              </p>
+            </div>
+          </div>
         </div>
 
-        <form onSubmit={createSession} className="form form--grid">
-          <div className="field">
-            <label className="label" htmlFor="userId">
-              Learner *
-            </label>
-            <select
-              id="userId"
-              name="userId"
-              className="select"
-              value={form.userId}
-              onChange={onCreateChange}
-              required
-            >
-              <option value="">Select a learner…</option>
-              {users.map((u) => (
-                <option key={u.id} value={u.id}>
-                  {u.name ? `${u.name} — ${u.email}` : u.email}
-                </option>
-              ))}
-            </select>
-          </div>
+        <form onSubmit={createSession} className="modern-form">
+          <div className="form-grid">
+            <div className="form-field">
+              <label className="form-label">
+                Learner<span className="form-required">*</span>
+              </label>
+              <select
+                name="userId"
+                className="form-input"
+                value={form.userId}
+                onChange={onCreateChange}
+                required
+              >
+                <option value="">Select learner...</option>
+                {users.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.name ? `${u.name} — ${u.email}` : u.email}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-          {/* Teacher (optional) */}
-          <div className="field">
-            <label className="label" htmlFor="teacherId">
-              Teacher
-            </label>
-            <select
-              id="teacherId"
-              name="teacherId"
-              className="select"
-              value={form.teacherId}
-              onChange={onCreateChange}
-            >
-              <option value="">Unassigned</option>
-              {teachers.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name ? `${t.name} — ${t.email}` : t.email}
-                </option>
-              ))}
-            </select>
-          </div>
+            <div className="form-field">
+              <label className="form-label">Teacher</label>
+              <select
+                name="teacherId"
+                className="form-input"
+                value={form.teacherId}
+                onChange={onCreateChange}
+              >
+                <option value="">Unassigned</option>
+                {teachers.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name ? `${t.name} — ${t.email}` : t.email}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-          <div className="field">
-            <label className="label" htmlFor="title">
-              Title *
-            </label>
-            <input
-              id="title"
-              name="title"
-              className="input"
-              value={form.title}
-              onChange={onCreateChange}
-              required
-            />
-          </div>
+            <div className="form-field form-field--full">
+              <label className="form-label">
+                Session Title<span className="form-required">*</span>
+              </label>
+              <input
+                name="title"
+                className="form-input"
+                value={form.title}
+                onChange={onCreateChange}
+                placeholder="e.g., React Advanced Patterns"
+                required
+              />
+            </div>
 
-          <div className="field">
-            <label className="label">Date & start</label>
-            <div className="form--row2">
+            <div className="form-field">
+              <label className="form-label">
+                Date<span className="form-required">*</span>
+              </label>
               <input
                 type="date"
                 name="date"
-                className="input"
+                className="form-input"
                 value={form.date}
                 onChange={onCreateChange}
                 required
               />
+            </div>
+
+            <div className="form-field">
+              <label className="form-label">
+                Start Time<span className="form-required">*</span>
+              </label>
               <input
                 type="time"
                 name="startTime"
-                className="input"
+                className="form-input"
                 value={form.startTime}
                 onChange={onCreateChange}
                 required
               />
             </div>
-          </div>
 
-          <div className="field">
-            <label className="label">End time OR duration (mins)</label>
-            <div className="form--row2">
+            <div className="form-field">
+              <label className="form-label">End Time</label>
               <input
                 type="time"
                 name="endTime"
-                className="input"
+                className="form-input"
                 value={form.endTime}
                 onChange={onCreateChange}
               />
+            </div>
+
+            <div className="form-field">
+              <label className="form-label">Duration (minutes)</label>
               <input
                 type="number"
                 name="duration"
-                min="15"
-                step="15"
-                className="input"
+                className="form-input"
                 value={form.duration}
                 onChange={onCreateChange}
+                min="15"
+                step="15"
                 disabled={!!form.endTime}
-                placeholder="mins"
+              />
+            </div>
+
+            <div className="form-field form-field--full">
+              <label className="form-label">Meeting URL</label>
+              <input
+                name="meetingUrl"
+                className="form-input"
+                value={form.meetingUrl}
+                onChange={onCreateChange}
+                placeholder="https://meet.google.com/..."
+              />
+            </div>
+
+            <div className="form-field form-field--full">
+              <label className="form-label">Notes</label>
+              <textarea
+                name="notes"
+                className="form-textarea"
+                value={form.notes}
+                onChange={onCreateChange}
+                rows={3}
+                placeholder="Additional notes for this session..."
               />
             </div>
           </div>
 
-          <div className="field">
-            <label className="label" htmlFor="meetingUrl">
-              Meeting link
-            </label>
-            <input
-              id="meetingUrl"
-              name="meetingUrl"
-              className="input"
-              value={form.meetingUrl}
-              onChange={onCreateChange}
-              placeholder="https://…"
-            />
-          </div>
-
-          <div className="field field--notes">
-            <label className="label" htmlFor="notes">
-              Notes
-            </label>
-            <textarea
-              id="notes"
-              name="notes"
-              className="textarea"
-              value={form.notes}
-              onChange={onCreateChange}
-              rows={3}
-            />
-          </div>
-
-          <div className="actions actions--right">
-            <button className="btn btn--primary" type="submit">
-              Create
+          <div className="form-actions">
+            <button type="submit" className="btn-primary">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path
+                  d="M8 3V13M3 8H13"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+              </svg>
+              Create Session
             </button>
             <button
               type="button"
-              className="btn btn--ghost"
+              className="btn-secondary"
               onClick={() =>
                 setForm((f) => ({
                   ...f,
@@ -639,281 +759,409 @@ function Admin() {
                 }))
               }
             >
-              Clear
+              Clear Form
             </button>
           </div>
         </form>
       </section>
 
-      {/* List sessions */}
-      <section className="card">
-        <div className="card__header card__header--row">
-          <h2 className="card__title">All sessions</h2>
-          <div className="filters">
-            <input
-              type="text"
-              className="input input--search"
-              placeholder="Search by user email/name or title…"
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              aria-label="Search"
-            />
-
+      <section className="admin-card">
+        <div className="admin-card__header">
+          <div className="admin-card__title-group">
+            <div className="admin-card__icon admin-card__icon--accent">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <rect
+                  x="3"
+                  y="4"
+                  width="18"
+                  height="18"
+                  rx="2"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                />
+                <path
+                  d="M3 10H21M8 2V6M16 2V6"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </div>
+            <div>
+              <h2 className="admin-card__title">All Sessions</h2>
+              <p className="admin-card__subtitle">
+                {loading
+                  ? "Loading..."
+                  : `${sessions.length} of ${total} sessions`}
+              </p>
+            </div>
+          </div>
+          <div className="admin-card__actions">
+            <div className="search-box">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path
+                  d="M7 13C10.3137 13 13 10.3137 13 7C13 3.68629 10.3137 1 7 1C3.68629 1 1 3.68629 1 7C1 10.3137 3.68629 13 7 13Z"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
+                <path
+                  d="M11.5 11.5L15 15"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
+              </svg>
+              <input
+                type="text"
+                placeholder="Search sessions..."
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+              />
+            </div>
             <select
-              className="select"
+              className="filter-select"
               value={teacherIdFilter}
               onChange={(e) => setTeacherIdFilter(e.target.value)}
-              aria-label="Teacher"
             >
-              <option value="">All teachers</option>
+              <option value="">All Teachers</option>
               {teachers.map((t) => (
                 <option key={t.id} value={t.id}>
-                  {t.name ? `${t.name} — ${t.email}` : t.email}
+                  {t.name || t.email}
                 </option>
               ))}
             </select>
-
             <input
               type="date"
-              className="input"
+              className="filter-select"
               value={from}
               onChange={(e) => setFrom(e.target.value)}
-              aria-label="From date"
             />
             <input
               type="date"
-              className="input"
+              className="filter-select"
               value={to}
               onChange={(e) => setTo(e.target.value)}
-              aria-label="To date"
             />
           </div>
         </div>
 
-        <div className="meta">
-          {loading ? "Loading…" : `Showing ${sessions.length} of ${total}`}
-        </div>
-
-        <div className="table">
-          <div className="table__scroll">
-            <table>
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Learner</th>
-                  <th>Teacher</th>
-                  <th>Title</th>
-                  <th>Start</th>
-                  <th>End</th>
-                  <th>Meeting</th>
-                  <th style={{ width: 180 }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sessions.map((s) =>
-                  editingId === s.id ? (
-                    <tr key={s.id} className="is-editing">
-                      <td>{s.id}</td>
-                      <td>
-                        <select
-                          name="userId"
-                          className="select"
-                          value={editForm.userId}
-                          onChange={onEditChange}
-                        >
-                          <option value="">(keep current)</option>
-                          {users.map((u) => (
-                            <option key={u.id} value={u.id}>
-                              {u.name ? `${u.name} — ${u.email}` : u.email}
-                            </option>
-                          ))}
-                        </select>
-                      </td>
-                      {/* Teacher (edit) */}
-                      <td>
-                        <select
-                          name="teacherId"
-                          className="select"
-                          value={editForm.teacherId || ""}
-                          onChange={onEditChange}
-                        >
-                          <option value="">Unassigned</option>
-                          {teachers.map((t) => (
-                            <option key={t.id} value={t.id}>
-                              {t.name ? `${t.name} — ${t.email}` : t.email}
-                            </option>
-                          ))}
-                        </select>
-                      </td>
-
-                      <td>
-                        <input
-                          name="title"
-                          className="input"
-                          value={editForm.title}
-                          onChange={onEditChange}
+        <div className="sessions-grid">
+          {sessions.map((s) =>
+            editingId === s.id ? (
+              <div key={s.id} className="session-edit-card">
+                <div className="session-edit-header">
+                  <h3>Edit Session #{s.id}</h3>
+                  <button className="btn-close" onClick={cancelEdit}>
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                      <path
+                        d="M12 4L4 12M4 4L12 12"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  </button>
+                </div>
+                <div className="form-grid">
+                  <div className="form-field">
+                    <label className="form-label">Learner</label>
+                    <select
+                      name="userId"
+                      className="form-input"
+                      value={editForm.userId}
+                      onChange={onEditChange}
+                    >
+                      {users.map((u) => (
+                        <option key={u.id} value={u.id}>
+                          {u.name ? `${u.name} — ${u.email}` : u.email}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="form-field">
+                    <label className="form-label">Teacher</label>
+                    <select
+                      name="teacherId"
+                      className="form-input"
+                      value={editForm.teacherId}
+                      onChange={onEditChange}
+                    >
+                      <option value="">Unassigned</option>
+                      {teachers.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {t.name || t.email}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="form-field form-field--full">
+                    <label className="form-label">Title</label>
+                    <input
+                      name="title"
+                      className="form-input"
+                      value={editForm.title}
+                      onChange={onEditChange}
+                    />
+                  </div>
+                  <div className="form-field">
+                    <label className="form-label">Date</label>
+                    <input
+                      type="date"
+                      name="date"
+                      className="form-input"
+                      value={editForm.date}
+                      onChange={onEditChange}
+                    />
+                  </div>
+                  <div className="form-field">
+                    <label className="form-label">Start Time</label>
+                    <input
+                      type="time"
+                      name="startTime"
+                      className="form-input"
+                      value={editForm.startTime}
+                      onChange={onEditChange}
+                    />
+                  </div>
+                  <div className="form-field">
+                    <label className="form-label">End Time</label>
+                    <input
+                      type="time"
+                      name="endTime"
+                      className="form-input"
+                      value={editForm.endTime}
+                      onChange={onEditChange}
+                    />
+                  </div>
+                  <div className="form-field">
+                    <label className="form-label">Duration (minutes)</label>
+                    <input
+                      type="number"
+                      name="duration"
+                      className="form-input"
+                      value={editForm.duration}
+                      onChange={onEditChange}
+                      min="15"
+                      step="15"
+                      disabled={!!editForm.endTime}
+                    />
+                  </div>
+                  <div className="form-field form-field--full">
+                    <label className="form-label">Meeting URL</label>
+                    <input
+                      name="meetingUrl"
+                      className="form-input"
+                      value={editForm.meetingUrl}
+                      onChange={onEditChange}
+                    />
+                  </div>
+                </div>
+                <div className="session-edit-actions">
+                  <button className="btn-secondary" onClick={cancelEdit}>
+                    Cancel
+                  </button>
+                  <button
+                    className="btn-danger"
+                    onClick={() => deleteSession(s.id)}
+                  >
+                    Delete
+                  </button>
+                  <button
+                    className="btn-primary"
+                    onClick={() => updateSession(s.id)}
+                  >
+                    Save Changes
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div key={s.id} className="session-card-modern">
+                <div className="session-card-modern__header">
+                  <div className="session-card-modern__badge">
+                    Session #{s.id}
+                  </div>
+                  <div className="action-buttons">
+                    <button
+                      className="btn-action"
+                      onClick={() => startEdit(s)}
+                      title="Edit"
+                    >
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 16 16"
+                        fill="none"
+                      >
+                        <path
+                          d="M11.5 1.5L14.5 4.5L5 14H2V11L11.5 1.5Z"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
                         />
-                      </td>
-                      <td className="table__cell--2">
-                        <div className="form--row2">
-                          <input
-                            type="date"
-                            name="date"
-                            className="input"
-                            value={editForm.date}
-                            onChange={onEditChange}
-                          />
-                          <input
-                            type="time"
-                            name="startTime"
-                            className="input"
-                            value={editForm.startTime}
-                            onChange={onEditChange}
-                          />
-                        </div>
-                      </td>
-                      <td className="table__cell--2">
-                        <div className="form--row2">
-                          <input
-                            type="time"
-                            name="endTime"
-                            className="input"
-                            value={editForm.endTime}
-                            onChange={onEditChange}
-                          />
-                          <input
-                            type="number"
-                            name="duration"
-                            min="15"
-                            step="15"
-                            className="input"
-                            value={editForm.duration}
-                            onChange={onEditChange}
-                            disabled={!!editForm.endTime}
-                            placeholder="mins"
-                          />
-                        </div>
-                      </td>
-                      <td>
-                        <input
-                          name="meetingUrl"
-                          className="input"
-                          value={editForm.meetingUrl}
-                          onChange={onEditChange}
+                      </svg>
+                    </button>
+                    <button
+                      className="btn-action btn-action--danger"
+                      onClick={() => deleteSession(s.id)}
+                      title="Delete"
+                    >
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 16 16"
+                        fill="none"
+                      >
+                        <path
+                          d="M2 4H14M6 7V11M10 7V11M3 4L4 13C4 13.5304 4.21071 14.0391 4.58579 14.4142C4.96086 14.7893 5.46957 15 6 15H10C10.5304 15 11.0391 14.7893 11.4142 14.4142C11.7893 14.0391 12 13.5304 12 13L13 4M5 4V2C5 1.73478 5.10536 1.48043 5.29289 1.29289C5.48043 1.10536 5.73478 1 6 1H10C10.2652 1 10.5196 1.10536 10.7071 1.29289C10.8946 1.48043 11 1.73478 11 2V4"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
                         />
-                      </td>
-                      <td>
-                        <div className="btn-row">
-                          <button className="btn" onClick={cancelEdit}>
-                            Cancel
-                          </button>
-                          <button
-                            className="btn btn--primary"
-                            onClick={() => updateSession(s.id)}
-                          >
-                            Save
-                          </button>
-                          <button
-                            className="btn btn--danger"
-                            onClick={() => deleteSession(s.id)}
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ) : (
-                    <tr key={s.id}>
-                      <td>{s.id}</td>
-                      <td>
-                        {s.user?.name
-                          ? `${s.user.name} — ${s.user.email}`
-                          : s.user?.email}
-                      </td>
-                      {/* Teacher (read) */}
-                      <td>
-                        {s.teacher
-                          ? s.teacher.name
-                            ? `${s.teacher.name} — ${s.teacher.email}`
-                            : s.teacher.email
-                          : "—"}
-                      </td>
-                      <td>{s.title}</td>
-                      <td>{fmt(s.startAt)}</td>
-                      <td>{s.endAt ? fmt(s.endAt) : "—"}</td>
-                      <td>
-                        {s.meetingUrl ? (
-                          <a
-                            className="link"
-                            href={s.meetingUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                          >
-                            Open
-                          </a>
-                        ) : (
-                          "—"
-                        )}
-                      </td>
-                      <td>
-                        <div className="btn-row">
-                          <button className="btn" onClick={() => startEdit(s)}>
-                            Edit
-                          </button>
-                          <button
-                            className="btn btn--danger"
-                            onClick={() => deleteSession(s.id)}
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                )}
-                {!loading && sessions.length === 0 && (
-                  <tr>
-                    <td colSpan={7} className="empty">
-                      No sessions match your filter.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+                <h3 className="session-card-modern__title">{s.title}</h3>
+                <div className="session-card-modern__info">
+                  <div className="info-row">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                      <path
+                        d="M8 14C11.3137 14 14 11.3137 14 8C14 4.68629 11.3137 2 8 2C4.68629 2 2 4.68629 2 8C2 11.3137 4.68629 14 8 14Z"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                      />
+                      <path
+                        d="M8 4V8H11"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                    <span>{fmt(s.startAt)}</span>
+                  </div>
+                  <div className="info-row">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                      <circle
+                        cx="8"
+                        cy="5"
+                        r="2.5"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                      />
+                      <path
+                        d="M2 13C2 11 5 9 8 9C11 9 14 11 14 13"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                    <span>{s.user?.name || s.user?.email}</span>
+                  </div>
+                  {s.teacher && (
+                    <div className="info-row">
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 16 16"
+                        fill="none"
+                      >
+                        <path
+                          d="M8 1L14 4L8 7L2 4L8 1Z"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeLinejoin="round"
+                        />
+                        <path
+                          d="M2 12L8 15L14 12M2 8L8 11L14 8"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                      <span>{s.teacher?.name || s.teacher?.email}</span>
+                    </div>
+                  )}
+                  {s.meetingUrl && (
+                    <a
+                      href={s.meetingUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="meeting-link"
+                    >
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 16 16"
+                        fill="none"
+                      >
+                        <path
+                          d="M10 6L14 3.5V12.5L10 10M2 4C2 3.44772 2.44772 3 3 3H10C10.5523 3 11 3.44772 11 4V12C11 12.5523 10.5523 13 10 13H3C2.44772 13 2 12.5523 2 12V4Z"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                      Join Meeting
+                    </a>
+                  )}
+                </div>
+              </div>
+            )
+          )}
         </div>
       </section>
-      {/* Teacher workload (admin) */}
-      <section className="card">
-        <div className="card__header card__header--row">
-          <h2 className="card__title">Teacher workload</h2>
-          <div className="filters">
+
+      <section className="admin-card">
+        <div className="admin-card__header">
+          <div className="admin-card__title-group">
+            <div className="admin-card__icon admin-card__icon--warning">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M20 7H4C2.89543 7 2 7.89543 2 9V19C2 20.1046 2.89543 21 4 21H20C21.1046 21 22 20.1046 22 19V9C22 7.89543 21.1046 7 20 7Z"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                />
+                <path
+                  d="M16 21V5C16 4.46957 15.7893 3.96086 15.4142 3.58579C15.0391 3.21071 14.5304 3 14 3H10C9.46957 3 8.96086 3.21071 8.58579 3.58579C8.21071 3.96086 8 4.46957 8 5V21"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                />
+              </svg>
+            </div>
+            <div>
+              <h2 className="admin-card__title">Teacher Workload</h2>
+              <p className="admin-card__subtitle">Monitor hours and payroll</p>
+            </div>
+          </div>
+          <div className="admin-card__actions">
             <select
-              className="select"
+              className="filter-select"
               value={teacherIdFilter}
               onChange={(e) => setTeacherIdFilter(e.target.value)}
-              aria-label="Teacher"
             >
-              <option value="">All teachers</option>
+              <option value="">All Teachers</option>
               {teachers.map((t) => (
                 <option key={t.id} value={t.id}>
-                  {t.name ? `${t.name} — ${t.email}` : t.email}
+                  {t.name || t.email}
                 </option>
               ))}
             </select>
             <input
               type="date"
-              className="input"
+              className="filter-select"
               value={from}
               onChange={(e) => setFrom(e.target.value)}
-              aria-label="From date"
             />
             <input
               type="date"
-              className="input"
+              className="filter-select"
               value={to}
               onChange={(e) => setTo(e.target.value)}
-              aria-label="To date"
             />
           </div>
         </div>
@@ -924,7 +1172,6 @@ function Admin() {
   );
 }
 
-//teacher workload
 function TeacherWorkload({ teacherId, from, to }) {
   const [rows, setRows] = useState([]);
   const [busy, setBusy] = useState(false);
@@ -941,73 +1188,83 @@ function TeacherWorkload({ teacherId, from, to }) {
           `http://localhost:5050/api/admin/teachers/workload?${p.toString()}`
         );
         setRows(Array.isArray(data) ? data : []);
+      } catch (e) {
+        console.error("Failed to load workload data", e);
+        setRows([]);
       } finally {
         setBusy(false);
       }
     })();
   }, [teacherId, from, to]);
 
-  return (
-    <div className="table">
-      <div className="table__scroll">
-        <table>
-          <thead>
-            <tr>
-              <th>Teacher</th>
-              <th>Sessions</th>
-              <th>Hours</th>
-              <th>Rate/hr</th>
-              <th>Rate/session</th>
-              <th>Payroll (hourly)</th>
-              <th>Payroll (per session)</th>
-              <th>Applied</th>
-            </tr>
-          </thead>
-          <tbody>
-            {busy && (
-              <tr>
-                <td colSpan={8} className="empty">
-                  Loading…
-                </td>
-              </tr>
-            )}
-            {!busy && rows.length === 0 && (
-              <tr>
-                <td colSpan={8} className="empty">
-                  No data
-                </td>
-              </tr>
-            )}
-            {rows.map((r) => (
-              <tr key={r.teacher.id}>
-                <td>
-                  {r.teacher.name
-                    ? `${r.teacher.name} — ${r.teacher.email}`
-                    : r.teacher.email}
-                </td>
-                <td>{r.sessions}</td>
-                <td>{r.hours}</td>
-                <td>
-                  {r.rateHourlyCents
-                    ? `$${(r.rateHourlyCents / 100).toFixed(2)}`
-                    : "—"}
-                </td>
-                <td>
-                  {r.ratePerSessionCents
-                    ? `$${(r.ratePerSessionCents / 100).toFixed(2)}`
-                    : "—"}
-                </td>
-                <td>{`$${r.payrollHourlyUSD.toFixed(2)}`}</td>
-                <td>{`$${r.payrollPerSessionUSD.toFixed(2)}`}</td>
-                <td>
-                  <strong>{`$${r.payrollAppliedUSD.toFixed(2)}`}</strong>{" "}
-                  <small>({r.method})</small>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+  if (busy) {
+    return (
+      <div
+        style={{
+          padding: "2rem",
+          textAlign: "center",
+          color: "var(--admin-text-secondary)",
+        }}
+      >
+        Loading workload data...
       </div>
+    );
+  }
+
+  if (rows.length === 0) {
+    return (
+      <div
+        style={{
+          padding: "2rem",
+          textAlign: "center",
+          color: "var(--admin-text-secondary)",
+        }}
+      >
+        No workload data available
+      </div>
+    );
+  }
+
+  return (
+    <div className="workload-grid">
+      {rows.map((w) => (
+        <div key={w.teacher.id} className="workload-card">
+          <div className="workload-card__header">
+            <div className="user-avatar user-avatar--large">
+              {w.teacher.name?.charAt(0) || w.teacher.email.charAt(0)}
+            </div>
+            <div className="workload-card__info">
+              <h3>{w.teacher.name || w.teacher.email}</h3>
+              <p>{w.teacher.email}</p>
+            </div>
+          </div>
+          <div className="workload-stats">
+            <div className="workload-stat">
+              <div className="workload-stat__label">Sessions</div>
+              <div className="workload-stat__value">{w.sessions}</div>
+            </div>
+            <div className="workload-stat">
+              <div className="workload-stat__label">Hours</div>
+              <div className="workload-stat__value">{w.hours}</div>
+            </div>
+            <div className="workload-stat">
+              <div className="workload-stat__label">Rate/Hour</div>
+              <div className="workload-stat__value">
+                ${(w.rateHourlyCents / 100).toFixed(2)}
+              </div>
+            </div>
+            <div className="workload-stat workload-stat--highlight">
+              <div className="workload-stat__label">Total Payroll</div>
+              <div className="workload-stat__value">
+                ${w.payrollAppliedUSD.toFixed(2)}
+              </div>
+            </div>
+          </div>
+          <div className="workload-method">
+            <span className="badge-method">{w.method}</span>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

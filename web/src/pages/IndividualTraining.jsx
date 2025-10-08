@@ -184,7 +184,7 @@ function Individual() {
           <figure className="ind-hero__media">
             <div className="ind-hero__media-glow"></div>
             <img
-              src="/images/learner-practicing-with-a-coach.jpg"
+              src="/images/learner-practicing-with-a-coach.avif"
               alt="Learner practicing with a coach"
               loading="eager"
             />
@@ -226,17 +226,17 @@ function Individual() {
           <Goal
             title="Work & interviews"
             p="Practice interviews, meetings, and presentations. Get language you can use tomorrow."
-            img="/images/interviews.jpg"
+            img="/images/interviews.avif"
           />
           <Goal
             title="Fluency & conversation"
             p="Sound natural in daily life. Build vocabulary and confidence with guided speaking."
-            img="/images/speaking.jpg"
+            img="/images/speaking.avif"
           />
           <Goal
             title="Exams & study"
             p="Prepare for IELTS/TOEFL or university speaking tasks with targeted feedback."
-            img="/images/exams.jpg"
+            img="/images/exams.avif"
           />
         </div>
 
@@ -304,21 +304,21 @@ function Individual() {
             quote="I finally feel comfortable leading meetings. My coach made it practical and fun."
             by="Sara"
             role="Software Engineer"
-            avatar="/images/sara.jpg"
+            avatar="/images/sara.avif"
             rating={5}
           />
           <Testimonial
             quote="Two months with Speexify did more than a year of classes."
             by="Ali"
             role="MSc Student"
-            avatar="/images/ali.jpg"
+            avatar="/images/ali.avif"
             rating={5}
           />
           <Testimonial
             quote="The interview practice helped me get an offer. Totally worth it."
             by="Marta"
             role="Product Designer"
-            avatar="/images/marta.jpg"
+            avatar="/images/marta.avif"
             rating={5}
           />
         </div>

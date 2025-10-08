@@ -9,13 +9,15 @@
   position: sticky;
   top: 0;
   z-index: 50;
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.95),
-    rgba(255, 255, 255, 0.75)
-  );
-  backdrop-filter: saturate(180%) blur(20px);
-  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  background: rgba(255, 255, 255, 0.92);
+
+  // background: linear-gradient(
+  //   180deg,
+  //   rgba(255, 255, 255, 0.95),
+  //   rgba(255, 255, 255, 0.75)
+  // );
+  // backdrop-filter: saturate(180%) blur(20px);
+  // -webkit-backdrop-filter: saturate(180%) blur(20px);
   padding: 16px 0;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 
@@ -37,8 +39,8 @@
       rgba(255, 255, 255, 0.98),
       rgba(255, 255, 255, 0.92)
     );
-    backdrop-filter: saturate(200%) blur(24px);
-    -webkit-backdrop-filter: saturate(200%) blur(24px);
+    // backdrop-filter: saturate(200%) blur(24px);
+    // -webkit-backdrop-filter: saturate(200%) blur(24px);
     padding: 12px 0;
     box-shadow: 0 4px 24px -4px rgba(15, 23, 42, 0.08);
   }
@@ -143,16 +145,6 @@
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
-  .brand-orb {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, $brand 0%, #38bdf8 100%);
-    box-shadow: 0 0 12px rgba(14, 165, 233, 0.6);
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    animation: pulse-orb 3s ease-in-out infinite;
-  }
-
   &:hover {
     text-decoration: none;
     transform: translateY(-1px);
@@ -162,11 +154,6 @@
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
-    }
-
-    .brand-orb {
-      transform: scale(1.3);
-      box-shadow: 0 0 20px rgba(14, 165, 233, 0.8);
     }
   }
 }
@@ -510,7 +497,7 @@
 
 .mobile-drawer-inner {
   background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
+  // backdrop-filter: blur(20px);
   border-radius: 20px;
   padding: 20px;
   box-shadow: 0 20px 60px -20px rgba(15, 23, 42, 0.2),
@@ -748,11 +735,6 @@
 @media (max-width: 640px) {
   .brand {
     font-size: 24px !important;
-
-    .brand-orb {
-      width: 6px;
-      height: 6px;
-    }
   }
 
   .site-header-wrapper {

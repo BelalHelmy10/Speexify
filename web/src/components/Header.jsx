@@ -23,12 +23,30 @@ export default function Header() {
   // ───────────────────────────────────────────────────────────────────────────
   // Scroll detection: enhances glassmorphism and shadow depth on scroll
   // ───────────────────────────────────────────────────────────────────────────
+  // useEffect(() => {
+  //   const handleScroll = () => {
+  //     setScrolled(window.scrollY > 20);
+  //   };
+  //   window.addEventListener("scroll", handleScroll);
+  //   return () => window.removeEventListener("scroll", handleScroll);
+  // }, []);
+
   useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
+    let ticking = false;
+    const onScroll = () => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const next = window.scrollY > 20;
+          // only set state when it changes:
+          setScrolled((prev) => (prev !== next ? next : prev));
+          ticking = false;
+        });
+        ticking = true;
+      }
     };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   // ───────────────────────────────────────────────────────────────────────────
@@ -145,7 +163,6 @@ export default function Header() {
           onClick={() => setOpen(false)}
         >
           <span className="brand-text">Speexify</span>
-          <div className="brand-orb"></div>
         </Link>
 
         <nav className="nav">

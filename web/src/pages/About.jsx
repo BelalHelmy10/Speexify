@@ -1,17 +1,17 @@
 import React from "react";
 import "../styles/about.scss";
 
-const heroImg = "/images/about_hero.jpg";
-const historyImg = "/images/about_history.jpg";
-const lifeImgA = "/images/about_life_a.jpg";
-const lifeImgB = "/images/about_life_b.jpg";
+const heroImg = "/images/about_hero.avif";
+const historyImg = "/images/about_history.avif";
+const lifeImgA = "/images/about_life_a.avif";
+const lifeImgB = "/images/about_life_b.avif";
 const valuesIconA = "/logos/icon_empathy.svg";
 const valuesIconB = "/logos/icon_empower.svg";
 const valuesIconC = "/logos/icon_ownership.svg";
 const valuesIconD = "/logos/icon_inclusive.svg";
 const leadBilly = "/images/Billy.jpeg";
 const leadZiad = "/images/ZiadAnwer.jpeg";
-const leadChris = "/images/leader_chris.jpg";
+const leadChris = "/images/leader_chris.avif";
 
 const stats = [
   { value: "6", label: "languages", icon: "🌍" },

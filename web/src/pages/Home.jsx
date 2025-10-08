@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 import "../styles/home.scss";
-
 function Home() {
   return (
     <div className="home">
@@ -183,19 +182,19 @@ function Home() {
               step="01"
               title="Assess"
               text="Complete a quick skills & goals survey to personalize your plan."
-              img="/images/assess.jpg"
+              img="/images/assess.avif"
             />
             <HowStep
               step="02"
               title="Coach"
               text="Meet 1:1 with a coach matched to your role & industry."
-              img="/images/coach.jpg"
+              img="/images/coach.avif"
             />
             <HowStep
               step="03"
               title="Apply"
               text="Practice with real work scenarios and measure improvement."
-              img="/images/apply.jpg"
+              img="/images/apply.avif"
             />
           </div>
 
@@ -239,25 +238,26 @@ function Home() {
             <CurriculumCard
               title="Client communication"
               desc="Run structured calls, handle objections, and summarize clearly."
-              img="/images/client-communication.jpg"
+              img="/images/client-communication.avif"
               color="blue"
             />
             <CurriculumCard
               title="Presentations"
               desc="Build confident narratives with visuals and engaging delivery."
-              img="/images/presentations.jpg"
+              img="/images/presentations.avif"
               color="purple"
             />
             <CurriculumCard
               title="Email & async"
               desc="Write crisp, professional messages that get quick responses."
-              img="/images/email-and-async.jpg"
+              img="/images/email-and-async.avif"
               color="green"
             />
             <CurriculumCard
               title="Leadership"
               desc="Drive decisions, give feedback, and influence across teams."
-              img="/images/leadership.jpg"
+              img="/images/leadership.avif
+              "
               color="orange"
             />
           </div>
@@ -297,7 +297,7 @@ function Home() {
               name="Lina T."
               role="Leadership Communication"
               bio="Led global teams; mentors managers on clarity and influence."
-              img="/images/Lina.jpg"
+              img="/images/Lina.avif"
             />
           </div>
 

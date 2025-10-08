@@ -55,7 +55,6 @@ $transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
         rgba(236, 72, 153, 0.15) 0%,
         transparent 50%
       );
-    animation: gradientShift 15s ease infinite;
   }
 }
 
@@ -87,7 +86,6 @@ $transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
   border-radius: 24px;
   padding: 48px 40px;
   box-shadow: $shadow-xl, 0 0 0 1px rgba(0, 0, 0, 0.05);
-  backdrop-filter: blur(10px);
   animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
 
@@ -125,7 +123,6 @@ $transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
     align-items: center;
     justify-content: center;
     box-shadow: $shadow-lg, 0 0 0 4px rgba(14, 165, 233, 0.1);
-    animation: brandPulse 2s ease-in-out infinite;
 
     svg {
       width: 28px;
@@ -220,7 +217,8 @@ $transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
   font-size: 15px;
   font-weight: 700;
   color: $text-muted;
-  transition: all $transition-base;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease,
+    box-shadow 0.2s ease;
   position: relative;
   z-index: 1;
 
@@ -411,7 +409,8 @@ $transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
     background: $bg-primary;
     border: 1.5px solid $border;
     border-radius: 12px;
-    transition: all $transition-base;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
     font-family: inherit;
 
     &::placeholder {
@@ -499,7 +498,7 @@ $transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
   border: none;
   border-radius: 12px;
   cursor: pointer;
-  transition: all $transition-base;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
   box-shadow: $shadow-md, 0 1px 0 0 rgba(255, 255, 255, 0.1) inset;
   position: relative;
   overflow: hidden;
@@ -514,7 +513,7 @@ $transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
       transparent 100%
     );
     opacity: 0;
-    transition: opacity $transition-base;
+    transition: opacity 0.2s ease;
   }
 
   &:hover:not(:disabled) {
@@ -577,7 +576,7 @@ $transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
   border: none;
   border-radius: 8px;
   cursor: pointer;
-  transition: all $transition-fast;
+  transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
   white-space: nowrap;
 
   svg {
@@ -651,7 +650,6 @@ $transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
     transparent 70%
   );
   filter: blur(40px);
-  animation: float 20s ease-in-out infinite;
 
   &.circle-1 {
     width: 400px;
